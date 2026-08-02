@@ -27,8 +27,8 @@ Build the first automated delivery foundation for CareerSetu so every change is 
 3. On pushes to main, the workflow will build the Docker image and smoke-test the container.
 
 ## Next step for Sprint 3
-The next sprint can expand this foundation into a fuller CareerSetu backend with:
-- alumni and employer data models
+The next sprint will update CareerSetu front-end with:
+- alumni and employer sign-up
 - authentication and role-based access
-- AI/ML service integration
-- staging/production deployment wiring
+- Other front end UI elements
+
