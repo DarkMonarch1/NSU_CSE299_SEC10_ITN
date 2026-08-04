@@ -1,5 +1,5 @@
 # NSU_CSE299_SEC10_ITN
-The repository for the CareerSetu CSE299 project. It contains the proposal-driven project artifacts, data files, and the sprint 2 implementation for a CI/CD-ready foundation.
+The repository for the CareerSetu CSE299 project. It contains the proposal-driven project artifacts, data files, implementation for a CI/CD-ready foundation, frontend of the project.
 
 ### Run locally
 ```bash
