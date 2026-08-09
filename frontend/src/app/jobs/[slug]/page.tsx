@@ -1,119 +1,233 @@
 "use client";
 
+import { use, useState } from "react";
 import Link from "next/link";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import { MOCK_JOBS } from "@/data/mockData";
+import { useAuth } from "@/context/AuthContext";
+import TrustBadge from "@/components/TrustBadge";
+import {
+  Building2,
+  MapPin,
+  Briefcase,
+  CheckCircle2,
+  ShieldCheck,
+  Sparkles,
+  ArrowLeft,
+  Send,
+  Award,
+  Lock,
+} from "lucide-react";
 
-const job = {
-  title: "Senior Product Manager, AI",
-  company: "ByteScale Labs",
-  location: "Dhaka, Bangladesh",
-  type: "Hybrid",
-  salary: "BDT 180k-220k",
-  summary:
-    "Lead the product strategy for AI-powered career solutions and employer matching. Work closely with data, engineering, and employer success teams.",
-  responsibilities: [
-    "Define product vision for AI-driven alumni matching.",
-    "Partner with recruiters and alumni to improve job trust scores.",
-    "Monitor performance of job recommendations and feedback loops.",
-  ],
-  requirements: [
-    "3+ years of product management experience.",
-    "Strong understanding of AI-driven recruitment workflows.",
-    "Excellent communication with alumni and employer stakeholders.",
-  ],
-};
+export default function JobDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = use(params);
+  const { profile } = useAuth();
+  const [applied, setApplied] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
 
-export default function JobDetailPage({ params }: { params: { slug: string } }) {
+  const job = MOCK_JOBS.find((j) => j.slug === resolvedParams.slug) || MOCK_JOBS[0];
+
+  const handleApply = (e: React.FormEvent) => {
+    e.preventDefault();
+    setApplied(true);
+    setShowApplyModal(false);
+  };
+
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <div className="mx-auto max-w-6xl px-6 py-16 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Job details</p>
-            <h1 className="mt-3 text-4xl font-semibold text-white">{job.title}</h1>
-            <p className="mt-2 text-sm text-slate-400">
-              {job.company} · {job.location} · {job.type}
-            </p>
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
+      <div className="mx-auto max-w-5xl px-6 lg:px-8">
+        <Link
+          href="/jobs"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-400 hover:underline mb-6"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to All Job Openings
+        </Link>
+
+        {/* HEADER HERO CARD */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl mb-8 space-y-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <TrustBadge score={job.trustScore} companyName={job.company} />
+                <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 text-xs font-semibold text-cyan-300">
+                  {job.aiMatchScore}% Candidate Fit
+                </span>
+                <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300">
+                  {job.targetConvocation}
+                </span>
+              </div>
+              <h1 className="text-3xl font-extrabold text-white sm:text-4xl">{job.title}</h1>
+              <p className="text-sm text-slate-300 mt-2 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-slate-400" />
+                <span className="font-semibold text-white">{job.company}</span>
+                <span>·</span>
+                <MapPin className="h-4 w-4 text-slate-400" />
+                <span>{job.location}</span>
+              </p>
+            </div>
+
+            <div className="flex flex-col items-start sm:items-end gap-2">
+              <span className="text-xl font-bold text-emerald-400">{job.salary}</span>
+              {applied ? (
+                <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-5 py-2.5 text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4" /> Application Submitted
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowApplyModal(true)}
+                  className="rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 px-7 py-3 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:brightness-110"
+                >
+                  Apply with Verified Profile
+                </button>
+              )}
+            </div>
           </div>
-          <Link
-            href="/jobs"
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:border-cyan-400/30 hover:bg-white/10"
-          >
-            Back to jobs
-          </Link>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[0.75fr_0.25fr]">
-          <section className="rounded-[32px] border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-black/30 backdrop-blur-xl">
-            <div className="space-y-6">
+        {/* DETAILS GRID */}
+        <div className="grid gap-8 md:grid-cols-12">
+          {/* MAIN DESCRIPTION */}
+          <div className="md:col-span-8 space-y-6">
+            <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl space-y-6">
               <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">About the role</p>
-                <p className="mt-4 text-lg leading-8 text-slate-300">{job.summary}</p>
+                <h2 className="text-lg font-bold text-white uppercase tracking-wider text-cyan-400">
+                  Role Overview
+                </h2>
+                <p className="mt-3 text-sm text-slate-300 leading-relaxed">{job.description}</p>
               </div>
+
               <div>
-                <h2 className="text-xl font-semibold text-white">Responsibilities</h2>
-                <ul className="mt-4 space-y-3 text-slate-300">
-                  {job.responsibilities.map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <span className="mt-1 block h-2 w-2 rounded-full bg-cyan-300" />
-                      <span>{item}</span>
+                <h2 className="text-lg font-bold text-white uppercase tracking-wider text-emerald-400">
+                  Key Requirements
+                </h2>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-300">
+                  {job.requirements.map((req, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5">
+                      <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                      <span>{req}</span>
                     </li>
                   ))}
                 </ul>
               </div>
+
               <div>
-                <h2 className="text-xl font-semibold text-white">Requirements</h2>
-                <ul className="mt-4 space-y-3 text-slate-300">
-                  {job.requirements.map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <span className="mt-1 block h-2 w-2 rounded-full bg-cyan-300" />
-                      <span>{item}</span>
+                <h2 className="text-lg font-bold text-white uppercase tracking-wider text-indigo-400">
+                  Responsibilities
+                </h2>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-300">
+                  {job.responsibilities.map((resp, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5">
+                      <span className="text-indigo-400 font-bold shrink-0">·</span>
+                      <span>{resp}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h2 className="text-lg font-bold text-white uppercase tracking-wider text-pink-400">
+                  Perks & Benefits
+                </h2>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-300">
+                  {job.benefits.map((b, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5">
+                      <span className="text-pink-400 font-bold shrink-0">★</span>
+                      <span>{b}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             </div>
-          </section>
+          </div>
 
-          <aside className="space-y-6">
-            <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Application</p>
-              <div className="mt-6 space-y-4">
-                <div className="rounded-3xl bg-slate-950/80 p-5">
-                  <p className="text-sm text-slate-400">Salary</p>
-                  <p className="mt-2 text-xl font-semibold text-white">{job.salary}</p>
+          {/* SIDEBAR MATCH ANALYSIS */}
+          <div className="md:col-span-4 space-y-6">
+            <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl space-y-4">
+              <h3 className="text-base font-bold text-white uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                AI Candidate Fit Analysis
+              </h3>
+
+              <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-center">
+                <p className="text-xs text-slate-400">Profile Match Rating</p>
+                <p className="text-3xl font-extrabold text-cyan-400 mt-1">{job.aiMatchScore}%</p>
+                <p className="text-[11px] text-slate-300 mt-1">High compatibility with your skills</p>
+              </div>
+
+              <div className="space-y-2 text-xs text-slate-300">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-slate-400">Alumnus Name</span>
+                  <span className="font-semibold text-white">{profile.fullName}</span>
                 </div>
-                <div className="rounded-3xl bg-slate-950/80 p-5">
-                  <p className="text-sm text-slate-400">Type</p>
-                  <p className="mt-2 text-xl font-semibold text-white">{job.type}</p>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-slate-400">Academic CGPA</span>
+                  <span className="font-semibold text-emerald-400">{profile.cgpa}</span>
                 </div>
-                <button className="w-full rounded-full bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
-                  Apply with profile
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-slate-400">Credential Status</span>
+                  <span className="font-semibold text-cyan-300">Verified Ledger</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* APPLICATION SUBMISSION MODAL */}
+        {showApplyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md">
+            <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                    <Send className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Apply to {job.title}</h3>
+                    <p className="text-xs text-slate-400">{job.company}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowApplyModal(false)}
+                  className="rounded-full bg-white/5 p-2 text-slate-400 hover:bg-white/10 hover:text-white"
+                >
+                  ✕
                 </button>
               </div>
+
+              <form onSubmit={handleApply} className="mt-6 space-y-4 text-sm text-slate-300">
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 space-y-1 text-xs">
+                  <p className="font-bold text-emerald-400">Verified Profile Attachment</p>
+                  <p>Name: <strong className="text-white">{profile.fullName}</strong></p>
+                  <p>Degree: <strong className="text-white">{profile.degree}</strong> (CGPA {profile.cgpa})</p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">
+                    Cover Note to Recruiter
+                  </label>
+                  <textarea
+                    rows={4}
+                    defaultValue={`Dear ${job.company} Hiring Team,\nI am an NSU CSE graduate interested in the ${job.title} role. My profile includes verified CGPA credentials and full stack experience.`}
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-xs text-white outline-none focus:border-emerald-400/40"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  <Lock className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Full CV & grade sheet unlocked only after application acceptance.</span>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full rounded-full bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
+                >
+                  Submit Application Now
+                </button>
+              </form>
             </div>
-            <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">Employer info</p>
-              <div className="mt-6 space-y-3 text-slate-300">
-                <div>
-                  <p className="text-sm text-slate-400">Company</p>
-                  <p className="mt-1 text-base font-semibold text-white">{job.company}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">Trusted score</p>
-                  <p className="mt-1 text-base font-semibold text-white">98%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">Employer network</p>
-                  <p className="mt-1 text-base font-semibold text-white">Verified hiring partner</p>
-                </div>
-              </div>
-            </div>
-          </aside>
-        </div>
+          </div>
+        )}
       </div>
     </div>
-    </ProtectedRoute>
   );
 }

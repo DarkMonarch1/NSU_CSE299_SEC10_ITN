@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 type User = {
   name: string;
   email: string;
-  role: "alumni" | "employer";
+  role: "alumni" | "employer" | "admin";
 };
 
 type ProfileData = {
@@ -18,12 +18,12 @@ type ProfileData = {
 };
 
 const defaultProfile: ProfileData = {
-  fullName: "Jihanur Rahman Ratul",
+  fullName: "NSU Graduate Alumnus",
   headline: "NSU alumni seeking AI-driven career growth opportunities",
-  degree: "BSc in Computer Science",
+  degree: "BSc in Computer Science & Engineering",
   cgpa: "3.84",
-  skills: "AI, Web Development, Data Analysis, Product Design",
-  bio: "Experienced student leader with a passion for building trustworthy alumni-employer connections and data-driven career guidance.",
+  skills: "React.js, Next.js, TypeScript, Python, FastAPI, UI/UX",
+  bio: "Computer Science graduate with a passion for building trustworthy software systems, micro-services, and AI-driven platforms.",
 };
 
 type AuthContextValue = {

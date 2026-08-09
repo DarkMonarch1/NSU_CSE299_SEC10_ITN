@@ -1,127 +1,214 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-
-const jobPostings = [
-  {
-    slug: "ai-product-manager",
-    title: "AI Product Manager",
-    company: "ByteScale Labs",
-    location: "Dhaka, Bangladesh",
-    type: "Hybrid",
-    salary: "BDT 150k-190k",
-    tag: "Trusted",
-  },
-  {
-    slug: "data-analyst",
-    title: "Data Analyst",
-    company: "Pathao",
-    location: "Remote",
-    type: "Remote",
-    salary: "BDT 110k-140k",
-    tag: "High-fit",
-  },
-  {
-    slug: "full-stack-developer",
-    title: "Full Stack Developer",
-    company: "North Star Labs",
-    location: "Dhaka",
-    type: "On-site",
-    salary: "BDT 180k-220k",
-    tag: "Verified",
-  },
-];
+import TrustBadge from "@/components/TrustBadge";
+import PaymentModal from "@/components/PaymentModal";
+import { MOCK_JOBS } from "@/data/mockData";
+import {
+  Briefcase,
+  Search,
+  PlusCircle,
+  Filter,
+  ShieldCheck,
+  Building2,
+  MapPin,
+  ChevronRight,
+  TrendingUp,
+} from "lucide-react";
 
 export default function JobsPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  const filteredJobs = MOCK_JOBS.filter((job) => {
+    const matchesSearch =
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesType = selectedType === "All" || job.workType === selectedType;
+    const matchesCategory = selectedCategory === "All" || job.category === selectedCategory;
+
+    return matchesSearch && matchesType && matchesCategory;
+  });
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        <div className="mb-10 rounded-[32px] border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-black/40 backdrop-blur-xl">
-          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Job board</p>
-          <h1 className="mt-4 text-4xl font-semibold text-white sm:text-5xl">
-            Discover trusted opportunities for NSU alumni
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
-            Browse verified job postings, filter by role and work type, and connect with employers who trust your profile.
-          </p>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[0.75fr_0.25fr]">
-          <div className="space-y-6">
-            <div className="rounded-[28px] border border-white/10 bg-slate-900/70 p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">Available roles</h2>
-                  <p className="mt-2 text-sm text-slate-400">
-                    Tailored opportunities for alumni, backed by trust scores and verified hiring teams.
-                  </p>
-                </div>
-                <button className="rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400">
-                  Post a job
-                </button>
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        {/* HEADER BANNER */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl mb-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-semibold text-cyan-300 mb-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
+                <span>Verified Hiring Portal — EMSCAD Scam Classifier Active</span>
               </div>
+              <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
+                Verified Job Board for NSU Graduates
+              </h1>
+              <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                Browse pre-screened openings from top tech companies. Every job posting is audited for trust, preventing fraudulent recruitment scams.
+              </p>
             </div>
 
-            <div className="space-y-4">
-              {jobPostings.map((job) => (
-                <article
-                  key={job.slug}
-                  className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6 transition hover:border-cyan-400/30 hover:bg-slate-900/90"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{job.tag}</p>
-                      <h3 className="mt-3 text-2xl font-semibold text-white">{job.title}</h3>
-                      <p className="mt-2 text-sm text-slate-400">{job.company} · {job.location}</p>
-                    </div>
-                    <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200">
-                      {job.type}
-                    </div>
-                  </div>
-                  <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-300">
-                    <span>{job.salary}</span>
-                    <Link
-                      href={`/jobs/${job.slug}`}
-                      className="rounded-full bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
-                    >
-                      View details
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:brightness-110"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>Post a Job as Alumnus (BDT 300)</span>
+            </button>
           </div>
 
-          <aside className="space-y-6">
-            <div className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">Filters</p>
-              <div className="mt-6 space-y-3">
-                <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 hover:border-cyan-400/30 hover:bg-white/10">
-                  Remote
-                </button>
-                <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 hover:border-cyan-400/30 hover:bg-white/10">
-                  Hybrid
-                </button>
-                <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 hover:border-cyan-400/30 hover:bg-white/10">
-                  On-site
-                </button>
-              </div>
+          {/* SEARCH & QUICK FILTERS */}
+          <div className="mt-6 grid gap-4 md:grid-cols-12">
+            <div className="relative md:col-span-6">
+              <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by job title, company (Pathao, bKash), or keywords..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-cyan-400/40"
+              />
             </div>
-            <div className="rounded-[28px] border border-white/10 bg-slate-900/80 p-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Quick stats</p>
-              <div className="mt-6 grid gap-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm text-slate-400">Verified vacancies</p>
-                  <p className="mt-2 text-xl font-semibold text-white">38+</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm text-slate-400">Partner employers</p>
-                  <p className="mt-2 text-xl font-semibold text-white">22</p>
-                </div>
-              </div>
+
+            <div className="md:col-span-3">
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-slate-200 outline-none focus:border-cyan-400/40"
+              >
+                <option value="All">All Work Types (Remote/Hybrid/Onsite)</option>
+                <option value="Remote">Remote Only</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="On-site">On-site</option>
+              </select>
             </div>
-          </aside>
+
+            <div className="md:col-span-3">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-slate-200 outline-none focus:border-cyan-400/40"
+              >
+                <option value="All">All Tech Fields</option>
+                <option value="Software Development">Software Development</option>
+                <option value="AI & Data Science">AI & Data Science</option>
+                <option value="Product & Project Management">Product & Project Management</option>
+              </select>
+            </div>
+          </div>
         </div>
+
+        {/* JOB LISTINGS MAIN CONTENT */}
+        <div className="grid gap-8 lg:grid-cols-12">
+          {/* JOBS FEED */}
+          <div className="lg:col-span-8 space-y-4">
+            {filteredJobs.map((job) => (
+              <article
+                key={job.id}
+                className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl transition hover:border-emerald-500/40 hover:bg-slate-900"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <TrustBadge score={job.trustScore} companyName={job.company} />
+                      <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300">
+                        {job.aiMatchScore}% Match Fit
+                      </span>
+                      <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] text-slate-300">
+                        {job.targetConvocation}
+                      </span>
+                    </div>
+
+                    <h2 className="text-xl font-bold text-white group-hover:text-emerald-300 transition">
+                      {job.title}
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{job.company}</span>
+                      <span>·</span>
+                      <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{job.location}</span>
+                    </p>
+                  </div>
+
+                  <span className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-1 text-xs text-slate-200 font-semibold self-start">
+                    {job.workType}
+                  </span>
+                </div>
+
+                <p className="mt-4 text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                  {job.description}
+                </p>
+
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-slate-400">
+                  <span className="font-bold text-emerald-400 text-sm">{job.salary}</span>
+                  <Link
+                    href={`/jobs/${job.slug}`}
+                    className="flex items-center gap-1 rounded-full bg-emerald-400 px-5 py-2 text-xs font-bold text-slate-950 transition hover:bg-emerald-300"
+                  >
+                    <span>View Details</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* SIDEBAR WIDGETS */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl">
+              <h3 className="text-base font-bold text-white uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Scam Prevention Protocol
+              </h3>
+              <ul className="mt-4 space-y-2.5 text-xs text-slate-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">✓</span>
+                  <span>Every employer is verified against the official NSU recruiter registry.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">✓</span>
+                  <span>Automatic EMSCAD machine learning audit evaluates 18 listing features.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">✓</span>
+                  <span>Never pay registration or training fees to any job publisher.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl">
+              <h3 className="text-base font-bold text-white uppercase tracking-wider text-emerald-400">
+                Quick Platform Stats
+              </h3>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-2xl border border-white/5 bg-white/5 p-3.5">
+                  <p className="text-xs text-slate-400">Verified Opportunities</p>
+                  <p className="text-xl font-bold text-white mt-0.5">38+ Active Roles</p>
+                </div>
+                <div className="rounded-2xl border border-white/5 bg-white/5 p-3.5">
+                  <p className="text-xs text-slate-400">Average Salary Range</p>
+                  <p className="text-xl font-bold text-emerald-400 mt-0.5">BDT 140k - 200k</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* POST JOB PAYMENT MODAL (FEE: 300 BDT) */}
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={() => {}}
+          itemTitle="NSU Alumnus Job Posting Listing"
+          amountBDT={300}
+        />
       </div>
     </div>
   );

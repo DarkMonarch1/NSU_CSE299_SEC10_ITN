@@ -19,7 +19,8 @@ export default function LoginPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    login({ name: "Jihanur Rahman Ratul", email, role: "alumni" });
+    const userName = email ? email.split("@")[0].replace(".", " ") : "NSU Alumnus";
+    login({ name: userName, email, role: "alumni" });
     router.push("/dashboard");
   };
 
@@ -53,7 +54,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="alumni@northsouth.edu"
                   className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/10"
                   required
                 />
