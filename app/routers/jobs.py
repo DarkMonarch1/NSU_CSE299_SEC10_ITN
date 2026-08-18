@@ -108,7 +108,6 @@ def create_job(payload: JobCreate, db: Session = Depends(get_db)) -> JobResponse
 def get_job_by_slug(slug: str, db: Session = Depends(get_db)) -> JobResponse:
     job = db.query(JobPostingModel).filter(JobPostingModel.slug == slug).first()
     if not job:
-        # Try matching by ID fallback
         job = db.query(JobPostingModel).filter(JobPostingModel.id == slug).first()
 
     if not job:

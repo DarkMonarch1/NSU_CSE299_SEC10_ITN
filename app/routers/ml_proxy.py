@@ -32,7 +32,6 @@ def analyze_cv(payload: CVAnalysisInput, db: Session = Depends(get_db)) -> CVAna
         result = compute_cv_match_score(payload.resumeText, payload.targetRole)
         res = CVAnalysisOutput(**result)
 
-    # Persist analysis in database
     try:
         db_record = CVAnalysisModel(
             target_role=res.targetRole,
@@ -61,7 +60,6 @@ def analyze_job_trust(payload: JobTrustAnalysisInput, db: Session = Depends(get_
         result = classify_job_fraud(combined_text)
         res = JobTrustAnalysisOutput(**result)
 
-    # Persist audit in database
     try:
         db_audit = JobTrustAuditModel(
             job_title=payload.jobTitle,
