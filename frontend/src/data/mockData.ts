@@ -12,7 +12,7 @@ export const MOCK_ALUMNI: AlumniProfile[] = [
     convocationBatch: "20th Convocation",
     graduationYear: 2023,
     currentCompany: "ByteScale Labs",
-    currentRole: "UI/UX & Frontend Lead",
+    currentRole: "UI/UX & Frontend & ML Lead",
     location: "Dhaka, Bangladesh",
     skills: ["React.js", "Next.js", "TypeScript", "Tailwind CSS", "UI/UX Design", "Figma", "REST APIs"],
     bio: "Passionate web developer and UI designer focused on building high-performance, accessible web platforms for top tech teams.",
