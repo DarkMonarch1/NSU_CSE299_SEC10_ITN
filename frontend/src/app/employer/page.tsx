@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TrustBadge from "@/components/TrustBadge";
 import PaymentModal from "@/components/PaymentModal";
-import { MOCK_JOBS, MOCK_ALUMNI } from "@/data/mockData";
+import { MOCK_ALUMNI } from "@/data/mockData";
 import { AlumnusProfile, JobPosting } from "@/types";
-import { createJob } from "@/lib/api";
+import { createJob, getJobs, getAlumni } from "@/lib/api";
 import {
   Building2,
   PlusCircle,
@@ -20,10 +20,12 @@ import {
 
 export default function EmployerPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [unlockedAlumni, setUnlockedAlumni] = useState<string[]>(["alum-1"]);
+  const [unlockedAlumni, setUnlockedAlumni] = useState<string[]>([]);
   const [selectedTranscript, setSelectedTranscript] = useState<AlumnusProfile | null>(null);
-  const [postedJobs, setPostedJobs] = useState<JobPosting[]>(MOCK_JOBS);
+  const [postedJobs, setPostedJobs] = useState<JobPosting[]>([]);
+  const [candidates, setCandidates] = useState<AlumnusProfile[]>([]);
   const [showJobFormModal, setShowJobFormModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [newTitle, setNewTitle] = useState("");
   const [newCompany, setNewCompany] = useState("Pathao");
@@ -33,6 +35,20 @@ export default function EmployerPage() {
   const [newSalary, setNewSalary] = useState("BDT 150k - 190k");
   const [newDescription, setNewDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const [jobs, alumni] = await Promise.all([
+        getJobs(),
+        getAlumni(),
+      ]);
+      setPostedJobs(jobs);
+      setCandidates(alumni.length > 0 ? alumni : MOCK_ALUMNI);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
 
   const toggleUnlockGradeSheet = (alum: AlumnusProfile) => {
     if (unlockedAlumni.includes(alum.id)) {
@@ -60,7 +76,6 @@ export default function EmployerPage() {
       responsibilities: ["Build scalable backend APIs"],
       benefits: ["Health Insurance", "Performance Bonus"],
     });
-
 
     setPostedJobs([created, ...postedJobs]);
     setIsSubmitting(false);
@@ -109,34 +124,41 @@ export default function EmployerPage() {
               <span>Active Company Listings ({postedJobs.length})</span>
             </h2>
 
-            {postedJobs.map((job) => (
-              <div
-                key={job.id}
-                className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl space-y-3"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <TrustBadge score={job.trustScore} companyName={job.company} />
-                    <h3 className="text-lg font-bold text-white mt-2">{job.title}</h3>
-                    <p className="text-xs text-slate-400">{job.location} · {job.workType}</p>
-                  </div>
-                  <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-400">
-                    {job.applicationCount || 5} Applicants
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 line-clamp-2">{job.description}</p>
+            {loading ? (
+              <div className="flex items-center justify-center py-16 rounded-3xl border border-white/10 bg-slate-900/50">
+                <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mr-3" />
+                <p className="text-sm text-slate-400">Loading job postings...</p>
               </div>
-            ))}
+            ) : (
+              postedJobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <TrustBadge score={job.trustScore} companyName={job.company} />
+                      <h3 className="text-lg font-bold text-white mt-2">{job.title}</h3>
+                      <p className="text-xs text-slate-400">{job.location} · {job.workType}</p>
+                    </div>
+                    <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-400">
+                      {job.applicationCount || 0} Applicants
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 line-clamp-2">{job.description}</p>
+                </div>
+              ))
+            )}
           </div>
 
           {/* CANDIDATE SHORTLIST & GRADE SHEET UNLOCK */}
           <div className="lg:col-span-6 space-y-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
               <Users className="h-5 w-5 text-emerald-400" />
-              <span>Top AI-Ranked Candidates ({MOCK_ALUMNI.length})</span>
+              <span>Top AI-Ranked Candidates ({candidates.length})</span>
             </h2>
 
-            {MOCK_ALUMNI.map((alum) => {
+            {candidates.map((alum) => {
               const isUnlocked = unlockedAlumni.includes(alum.id);
 
               return (
@@ -152,7 +174,7 @@ export default function EmployerPage() {
                       <span className="text-xs font-bold text-emerald-400">CGPA {alum.cgpa || "3.84"}</span>
                     </div>
                     <h3 className="text-base font-bold text-white">{alum.fullName}</h3>
-                    <p className="text-xs text-slate-400">{alum.degree} ({alum.convocationBatch})</p>
+                    <p className="text-xs text-slate-400">{alum.degree || "B.S. in CSE"} ({alum.convocationBatch || "NSU Graduate"})</p>
 
                   </div>
 

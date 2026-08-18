@@ -1,5 +1,6 @@
 import json
 import re
+import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -71,9 +72,9 @@ def create_job(payload: JobCreate, db: Session = Depends(get_db)) -> JobResponse
 
     existing = db.query(JobPostingModel).filter(JobPostingModel.slug == slug).first()
     if existing:
-        slug = f"{slug}-{db.query(JobPostingModel).count() + 1}"
+        slug = f"{slug}-{uuid.uuid4().hex[:8]}"
 
-    job_id = f"job-{db.query(JobPostingModel).count() + 1}"
+    job_id = f"job-{uuid.uuid4().hex[:8]}"
 
     model = JobPostingModel(
         id=job_id,

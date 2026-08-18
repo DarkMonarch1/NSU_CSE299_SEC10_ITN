@@ -1,8 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import TrustBadge from "@/components/TrustBadge";
 import { MOCK_JOBS, MOCK_ALUMNI } from "@/data/mockData";
+import { getJobs, getAlumni } from "@/lib/api";
+import { JobPosting, AlumnusProfile } from "@/types";
 import {
   ShieldCheck,
   Sparkles,
@@ -17,9 +20,28 @@ import {
   Search,
   ArrowRight,
   BookOpen,
+  Loader2,
 } from "lucide-react";
 
 export default function Home() {
+  const [featuredJobs, setFeaturedJobs] = useState<JobPosting[]>([]);
+  const [topAlumni, setTopAlumni] = useState<AlumnusProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const [jobs, alumni] = await Promise.all([
+        getJobs(undefined, "All", "All"),
+        getAlumni("20th Convocation"),
+      ]);
+      setFeaturedJobs(jobs.slice(0, 4));
+      setTopAlumni(alumni.slice(0, 3));
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-slate-950">
       {/* Background Ambient Glows */}
@@ -148,53 +170,60 @@ export default function Home() {
               href="/jobs"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-400 hover:text-cyan-300"
             >
-              <span>View All 38+ Postings</span>
+              <span>View All Postings</span>
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {MOCK_JOBS.slice(0, 4).map((job) => (
-              <div
-                key={job.id}
-                className="group rounded-3xl border border-white/10 bg-slate-900/70 p-6 backdrop-blur-xl transition hover:border-emerald-500/30 hover:bg-slate-900/90"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <TrustBadge score={job.trustScore} companyName={job.company} />
-                      <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300">
-                        {job.aiMatchScore}% AI Match
-                      </span>
+          {loading ? (
+            <div className="flex items-center justify-center py-16 rounded-3xl border border-white/10 bg-slate-900/50">
+              <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mr-3" />
+              <p className="text-sm text-slate-400">Fetching live job postings from database...</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {featuredJobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="group rounded-3xl border border-white/10 bg-slate-900/70 p-6 backdrop-blur-xl transition hover:border-emerald-500/30 hover:bg-slate-900/90"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <TrustBadge score={job.trustScore} companyName={job.company} />
+                        <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300">
+                          {job.aiMatchScore}% AI Match
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-white group-hover:text-emerald-300 transition">
+                        {job.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {job.company} · {job.location}
+                      </p>
                     </div>
-                    <h3 className="text-xl font-bold text-white group-hover:text-emerald-300 transition">
-                      {job.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {job.company} · {job.location}
-                    </p>
+                    <span className="rounded-2xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 font-medium">
+                      {job.workType}
+                    </span>
                   </div>
-                  <span className="rounded-2xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 font-medium">
-                    {job.workType}
-                  </span>
-                </div>
 
-                <p className="mt-4 text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                  {job.description}
-                </p>
+                  <p className="mt-4 text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                    {job.description}
+                  </p>
 
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-slate-400">
-                  <span className="font-semibold text-emerald-400">{job.salary}</span>
-                  <Link
-                    href={`/jobs/${job.slug}`}
-                    className="rounded-full bg-white/10 px-4 py-2 font-semibold text-white transition hover:bg-emerald-400 hover:text-slate-950"
-                  >
-                    View Details & Apply
-                  </Link>
+                  <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-slate-400">
+                    <span className="font-semibold text-emerald-400">{job.salary}</span>
+                    <Link
+                      href={`/jobs/${job.slug}`}
+                      className="rounded-full bg-white/10 px-4 py-2 font-semibold text-white transition hover:bg-emerald-400 hover:text-slate-950"
+                    >
+                      View Details & Apply
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* CONVOCATION GRADUATE SPOTLIGHT & DIRECTORY */}
@@ -228,7 +257,7 @@ export default function Home() {
             </div>
 
             <div className="space-y-3">
-              {MOCK_ALUMNI.slice(0, 3).map((alum) => (
+              {topAlumni.map((alum) => (
                 <div
                   key={alum.id}
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/80 p-4 backdrop-blur-xl transition hover:border-cyan-500/30"
@@ -240,13 +269,13 @@ export default function Home() {
                     <div>
                       <h4 className="text-sm font-bold text-white">{alum.fullName}</h4>
                       <p className="text-xs text-slate-400">
-                        {alum.currentRole} at <span className="text-slate-200">{alum.currentCompany}</span>
+                        {alum.currentRole || "Software Engineer"} at <span className="text-slate-200">{alum.currentCompany || "Leading Tech Firm"}</span>
                       </p>
-                      <span className="text-[10px] text-cyan-400 font-semibold">{alum.convocationBatch}</span>
+                      <span className="text-[10px] text-cyan-400 font-semibold">{alum.convocationBatch || "NSU Graduate"}</span>
                     </div>
                   </div>
                   <span className="rounded-full bg-emerald-400/10 border border-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-300">
-                    CGPA {alum.cgpa}
+                    CGPA {alum.cgpa || "3.65"}
                   </span>
                 </div>
               ))}

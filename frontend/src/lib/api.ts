@@ -25,6 +25,46 @@ async function fetchWithFallback<T>(url: string, fallbackData: T, options?: Requ
   }
 }
 
+function enrichAlumni(apiAlumni: any[]): AlumnusProfile[] {
+  if (!apiAlumni || apiAlumni.length === 0) return MOCK_ALUMNI;
+  return apiAlumni.map((apiAlum) => {
+    const mockMatch = MOCK_ALUMNI.find((m) => m.nsuId === apiAlum.nsuId || m.fullName === apiAlum.fullName);
+    const base = mockMatch || {
+      id: apiAlum.id,
+      nsuId: apiAlum.nsuId,
+      fullName: apiAlum.fullName,
+      headline: "NSU alumni seeking AI-driven career growth opportunities",
+      degree: apiAlum.degree || "B.S. in Computer Science",
+      department: apiAlum.department || "Computer Science & Engineering",
+      cgpa: apiAlum.cgpa || "3.65",
+      convocationBatch: (apiAlum.batch || "20th Convocation") as AlumnusProfile["convocationBatch"],
+      graduationYear: 2023,
+      currentCompany: apiAlum.currentCompany || "Leading Tech Firm",
+      currentRole: apiAlum.currentRole || "Software Engineer",
+      location: "Dhaka, Bangladesh",
+      skills: ["Python", "FastAPI", "SQL"],
+      bio: "Computer Science graduate with a passion for building trustworthy software systems.",
+      isVerified: true,
+      blockchainCredentialHash: "0x8f7a932b1e4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e",
+      atsScore: 88,
+      featuredCv: false,
+      experienceYears: 2,
+    };
+    return {
+      ...base,
+      id: apiAlum.id || base.id,
+      nsuId: apiAlum.nsuId || base.nsuId,
+      fullName: apiAlum.fullName || base.fullName,
+      degree: apiAlum.degree || base.degree,
+      department: apiAlum.department || base.department,
+      cgpa: apiAlum.cgpa || base.cgpa,
+      convocationBatch: (apiAlum.batch || base.convocationBatch) as AlumnusProfile["convocationBatch"],
+      currentCompany: apiAlum.currentCompany || base.currentCompany,
+      currentRole: apiAlum.currentRole || base.currentRole,
+    };
+  });
+}
+
 export async function getJobs(search?: string, category?: string, workType?: string): Promise<JobPosting[]> {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
@@ -32,12 +72,20 @@ export async function getJobs(search?: string, category?: string, workType?: str
   if (workType && workType !== "All") params.append("workType", workType);
 
   const queryString = params.toString() ? `?${params.toString()}` : "";
-  return fetchWithFallback<JobPosting[]>(`/jobs${queryString}`, MOCK_JOBS);
+  const data = await fetchWithFallback<any[]>(`/jobs${queryString}`, MOCK_JOBS);
+  return data.map((job) => ({
+    ...job,
+    companyLogo: job.companyLogo || undefined,
+    departmentTarget: job.departmentTarget || "",
+    targetConvocation: job.targetConvocation || "",
+    aiMatchScore: job.aiMatchScore ?? 90,
+  })) as JobPosting[];
 }
 
 export async function getJobBySlug(slug: string): Promise<JobPosting | null> {
   const fallback = MOCK_JOBS.find((j) => j.slug === slug || j.id === slug) || MOCK_JOBS[0];
-  return fetchWithFallback<JobPosting>(`/jobs/${slug}`, fallback);
+  const data = await fetchWithFallback<JobPosting>(`/jobs/${slug}`, fallback);
+  return data;
 }
 
 export async function createJob(jobData: Partial<JobPosting>): Promise<JobPosting> {
@@ -53,7 +101,6 @@ export async function createJob(jobData: Partial<JobPosting>): Promise<JobPostin
   } catch (e) {
     console.error("Error creating job via API:", e);
   }
-  // Fallback
   return {
     id: `job-${Date.now()}`,
     slug: `new-job-${Date.now()}`,
@@ -96,11 +143,18 @@ export async function getAlumni(batch?: string): Promise<AlumnusProfile[]> {
   else if (batch === "20th Convocation") endpoint = "/alumni/20th";
   else if (batch === "21st Convocation") endpoint = "/alumni/21st";
 
-  return fetchWithFallback<AlumnusProfile[]>(endpoint, MOCK_ALUMNI as AlumnusProfile[]);
+  const data = await fetchWithFallback<any[]>(endpoint, MOCK_ALUMNI);
+  return enrichAlumni(data);
 }
 
 export async function getCompanies(): Promise<Company[]> {
-  return fetchWithFallback<Company[]>("/companies/list", MOCK_COMPANIES as Company[]);
+  const data = await fetchWithFallback<any[]>("/companies/list", MOCK_COMPANIES);
+  return data.map((c) => ({
+    ...c,
+    address: c.address || c.location || "",
+    email: c.email || `contact@${c.name?.toLowerCase().replace(/\s+/g, "") || "company"}.com`,
+    contact_number: c.contact_number || "+880 2 8835334",
+  })) as Company[];
 }
 
 export async function analyzeCVWithAPI(resumeText: string, targetRole: string) {

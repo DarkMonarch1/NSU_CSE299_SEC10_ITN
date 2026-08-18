@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import TrustBadge from "@/components/TrustBadge";
 import BlockchainVerificationModal from "@/components/BlockchainVerificationModal";
-import { MOCK_JOBS } from "@/data/mockData";
+import { getJobs } from "@/lib/api";
+import { JobPosting } from "@/types";
 import {
   Sparkles,
   Award,
@@ -16,10 +18,23 @@ import {
   ArrowRight,
   Clock,
   UserCheck,
+  Loader2,
 } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, profile } = useAuth();
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadJobs() {
+      setLoading(true);
+      const data = await getJobs();
+      setJobs(data.slice(0, 3));
+      setLoading(false);
+    }
+    loadJobs();
+  }, []);
 
   return (
     <ProtectedRoute>
@@ -117,30 +132,37 @@ export default function DashboardPage() {
                   </Link>
                 </div>
 
-                <div className="space-y-4">
-                  {MOCK_JOBS.slice(0, 3).map((job) => (
-                    <div
-                      key={job.id}
-                      className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 sm:flex-row sm:items-center sm:justify-between transition hover:border-emerald-500/30"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <TrustBadge score={job.trustScore} companyName={job.company} />
-                          <span className="text-xs font-bold text-cyan-400">{job.aiMatchScore}% Match</span>
-                        </div>
-                        <h3 className="text-base font-bold text-white">{job.title}</h3>
-                        <p className="text-xs text-slate-400">{job.company} · {job.salary}</p>
-                      </div>
-
-                      <Link
-                        href={`/jobs/${job.slug}`}
-                        className="rounded-full bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-emerald-300 shrink-0 self-start sm:self-center"
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 text-emerald-400 animate-spin mr-3" />
+                    <p className="text-sm text-slate-400">Loading recommendations...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {jobs.map((job: JobPosting) => (
+                      <div
+                        key={job.id}
+                        className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 sm:flex-row sm:items-center sm:justify-between transition hover:border-emerald-500/30"
                       >
-                        View & Apply
-                      </Link>
-                    </div>
-                  ))}
-                </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <TrustBadge score={job.trustScore} companyName={job.company} />
+                            <span className="text-xs font-bold text-cyan-400">{job.aiMatchScore}% Match</span>
+                          </div>
+                          <h3 className="text-base font-bold text-white">{job.title}</h3>
+                          <p className="text-xs text-slate-400">{job.company} · {job.salary}</p>
+                        </div>
+
+                        <Link
+                          href={`/jobs/${job.slug}`}
+                          className="rounded-full bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-emerald-300 shrink-0 self-start sm:self-center"
+                        >
+                          View & Apply
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
