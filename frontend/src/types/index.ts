@@ -72,7 +72,27 @@ export type CVGroomingReport = {
   suggestedKeywords: string[];
 };
 
+export type Company = {
+  id: number;
+  name: string;
+  industry: string;
+  location: string;
+  verified: boolean;
+  trustScore: number;
+  website?: string;
+  address?: string;
+  email?: string;
+  contact_number?: string;
+};
+
+export type AlumnusProfile = AlumniProfile & {
+  batch?: string;
+  procession?: string;
+  nsuId: string;
+};
+
 export type MagazineArticle = {
+
   id: string;
   slug: string;
   title: string;

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import TrustBadge from "@/components/TrustBadge";
 import PaymentModal from "@/components/PaymentModal";
-import { MOCK_JOBS } from "@/data/mockData";
+import { getJobs } from "@/lib/api";
+import { JobPosting } from "@/types";
 import {
   Briefcase,
   Search,
@@ -14,7 +15,7 @@ import {
   Building2,
   MapPin,
   ChevronRight,
-  TrendingUp,
+  Loader2,
 } from "lucide-react";
 
 export default function JobsPage() {
@@ -22,18 +23,18 @@ export default function JobsPage() {
   const [selectedType, setSelectedType] = useState<string>("All");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredJobs = MOCK_JOBS.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesType = selectedType === "All" || job.workType === selectedType;
-    const matchesCategory = selectedCategory === "All" || job.category === selectedCategory;
-
-    return matchesSearch && matchesType && matchesCategory;
-  });
+  useEffect(() => {
+    async function loadJobs() {
+      setLoading(true);
+      const fetched = await getJobs(searchTerm, selectedCategory, selectedType);
+      setJobs(fetched);
+      setLoading(false);
+    }
+    loadJobs();
+  }, [searchTerm, selectedType, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
@@ -44,13 +45,13 @@ export default function JobsPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-semibold text-cyan-300 mb-2">
                 <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Verified Hiring Portal — EMSCAD Scam Classifier Active</span>
+                <span>Verified Hiring Portal — EMSCAD Scam Classifier & Live Database Active</span>
               </div>
               <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
                 Verified Job Board for NSU Graduates
               </h1>
               <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Browse pre-screened openings from top tech companies. Every job posting is audited for trust, preventing fraudulent recruitment scams.
+                Browse pre-screened openings from top tech companies. Every job posting is audited for trust and persisted in CareerSetu DB.
               </p>
             </div>
 
@@ -108,56 +109,67 @@ export default function JobsPage() {
         <div className="grid gap-8 lg:grid-cols-12">
           {/* JOBS FEED */}
           <div className="lg:col-span-8 space-y-4">
-            {filteredJobs.map((job) => (
-              <article
-                key={job.id}
-                className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl transition hover:border-emerald-500/40 hover:bg-slate-900"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <TrustBadge score={job.trustScore} companyName={job.company} />
-                      <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300">
-                        {job.aiMatchScore}% Match Fit
-                      </span>
-                      <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] text-slate-300">
-                        {job.targetConvocation}
-                      </span>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-16 rounded-3xl border border-white/10 bg-slate-900/50">
+                <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mb-3" />
+                <p className="text-sm text-slate-400">Fetching live job postings from database...</p>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-8 text-center">
+                <p className="text-base text-slate-300 font-semibold">No job postings found matching your filters.</p>
+              </div>
+            ) : (
+              jobs.map((job) => (
+                <article
+                  key={job.id}
+                  className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl transition hover:border-emerald-500/40 hover:bg-slate-900"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <TrustBadge score={job.trustScore} companyName={job.company} />
+                        <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300">
+                          {job.aiMatchScore}% Match Fit
+                        </span>
+                        <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] text-slate-300">
+                          {job.targetConvocation}
+                        </span>
+                      </div>
+
+                      <h2 className="text-xl font-bold text-white group-hover:text-emerald-300 transition">
+                        {job.title}
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                        <span>{job.company}</span>
+                        <span>·</span>
+                        <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                        <span>{job.location}</span>
+                      </p>
                     </div>
 
-                    <h2 className="text-xl font-bold text-white group-hover:text-emerald-300 transition">
-                      {job.title}
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-                      <Building2 className="h-3.5 w-3.5 text-slate-400" />
-                      <span>{job.company}</span>
-                      <span>·</span>
-                      <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                      <span>{job.location}</span>
-                    </p>
+                    <span className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-1 text-xs text-slate-200 font-semibold self-start">
+                      {job.workType}
+                    </span>
                   </div>
 
-                  <span className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-1 text-xs text-slate-200 font-semibold self-start">
-                    {job.workType}
-                  </span>
-                </div>
+                  <p className="mt-4 text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                    {job.description}
+                  </p>
 
-                <p className="mt-4 text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                  {job.description}
-                </p>
-
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-slate-400">
-                  <span className="font-bold text-emerald-400 text-sm">{job.salary}</span>
-                  <Link
-                    href={`/jobs/${job.slug}`}
-                    className="flex items-center gap-1 rounded-full bg-emerald-400 px-5 py-2 text-xs font-bold text-slate-950 transition hover:bg-emerald-300"
-                  >
-                    <span>View Details</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </article>
-            ))}
+                  <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-slate-400">
+                    <span className="font-bold text-emerald-400 text-sm">{job.salary}</span>
+                    <Link
+                      href={`/jobs/${job.slug}`}
+                      className="flex items-center gap-1 rounded-full bg-emerald-400 px-5 py-2 text-xs font-bold text-slate-950 transition hover:bg-emerald-300"
+                    >
+                      <span>View Details</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </article>
+              ))
+            )}
           </div>
 
           {/* SIDEBAR WIDGETS */}
@@ -170,7 +182,7 @@ export default function JobsPage() {
               <ul className="mt-4 space-y-2.5 text-xs text-slate-300">
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">✓</span>
-                  <span>Every employer is verified against the official NSU recruiter registry.</span>
+                  <span>Every employer is verified against official NSU database.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">✓</span>
@@ -185,12 +197,12 @@ export default function JobsPage() {
 
             <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl">
               <h3 className="text-base font-bold text-white uppercase tracking-wider text-emerald-400">
-                Quick Platform Stats
+                Live Platform Metrics
               </h3>
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl border border-white/5 bg-white/5 p-3.5">
-                  <p className="text-xs text-slate-400">Verified Opportunities</p>
-                  <p className="text-xl font-bold text-white mt-0.5">38+ Active Roles</p>
+                  <p className="text-xs text-slate-400">Database Job Postings</p>
+                  <p className="text-xl font-bold text-white mt-0.5">{jobs.length} Active Roles</p>
                 </div>
                 <div className="rounded-2xl border border-white/5 bg-white/5 p-3.5">
                   <p className="text-xs text-slate-400">Average Salary Range</p>

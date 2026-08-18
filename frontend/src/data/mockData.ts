@@ -1,4 +1,5 @@
-import { AlumniProfile, JobPosting, MagazineArticle, CVGroomingReport } from "@/types";
+import { AlumniProfile, JobPosting, MagazineArticle, CVGroomingReport, Company } from "@/types";
+
 
 export const MOCK_ALUMNI: AlumniProfile[] = [
   {
@@ -372,3 +373,12 @@ export const MOCK_CV_REPORT: CVGroomingReport = {
   ],
   suggestedKeywords: ["FastAPI", "Docker", "PyTorch", "NLP", "State Management", "CI/CD Pipeline", "Unit Testing"]
 };
+
+export const MOCK_COMPANIES: Company[] = [
+  { id: 1, name: "Pathao", industry: "Mobility & Fintech", location: "Dhaka, Bangladesh", verified: true, trustScore: 98 },
+  { id: 2, name: "bKash", industry: "Fintech & Mobile Financial Services", location: "Dhaka, Bangladesh", verified: true, trustScore: 99 },
+  { id: 3, name: "Brain Station 23", industry: "Software Engineering & Enterprise Solutions", location: "Dhaka, Bangladesh", verified: true, trustScore: 96 },
+  { id: 4, name: "Optimizely", industry: "Digital Experience & Experimentation", location: "Dhaka / Remote", verified: true, trustScore: 95 },
+  { id: 5, name: "Therap Services", industry: "Healthcare IT & Software", location: "Dhaka, Bangladesh", verified: true, trustScore: 97 },
+];
+

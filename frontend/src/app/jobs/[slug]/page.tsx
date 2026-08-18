@@ -1,36 +1,85 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { MOCK_JOBS } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
 import TrustBadge from "@/components/TrustBadge";
+import { getJobBySlug, submitJobApplication } from "@/lib/api";
+import { JobPosting } from "@/types";
 import {
   Building2,
   MapPin,
-  Briefcase,
   CheckCircle2,
-  ShieldCheck,
   Sparkles,
   ArrowLeft,
   Send,
-  Award,
   Lock,
+  Loader2,
 } from "lucide-react";
 
 export default function JobDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
+  const [job, setJob] = useState<JobPosting | null>(null);
+  const [loading, setLoading] = useState(true);
   const [applied, setApplied] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [coverNote, setCoverNote] = useState("");
 
-  const job = MOCK_JOBS.find((j) => j.slug === resolvedParams.slug) || MOCK_JOBS[0];
 
-  const handleApply = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadJob() {
+      setLoading(true);
+      const data = await getJobBySlug(resolvedParams.slug);
+      setJob(data);
+      if (data) {
+        setCoverNote(
+          `Dear ${data.company} Hiring Team,\nI am an NSU CSE graduate interested in the ${data.title} role. My profile includes verified CGPA credentials and full stack experience.`
+        );
+      }
+      setLoading(false);
+    }
+    loadJob();
+  }, [resolvedParams.slug]);
+
+  const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!job) return;
+
+    await submitJobApplication(
+      job.id,
+      profile.fullName,
+      user?.email || "alumni@northsouth.edu",
+      coverNote
+    );
+
     setApplied(true);
     setShowApplyModal(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center py-12">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 text-emerald-400 animate-spin" />
+          <p className="text-sm text-slate-400">Loading job details from database...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">Job Posting Not Found</h1>
+          <Link href="/jobs" className="text-sm text-cyan-400 hover:underline">
+            Return to Job Board
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
@@ -207,7 +256,8 @@ export default function JobDetailPage({ params }: { params: Promise<{ slug: stri
                   </label>
                   <textarea
                     rows={4}
-                    defaultValue={`Dear ${job.company} Hiring Team,\nI am an NSU CSE graduate interested in the ${job.title} role. My profile includes verified CGPA credentials and full stack experience.`}
+                    value={coverNote}
+                    onChange={(e) => setCoverNote(e.target.value)}
                     className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-xs text-white outline-none focus:border-emerald-400/40"
                   />
                 </div>

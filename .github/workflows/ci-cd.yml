@@ -1,4 +1,4 @@
-name: CareerSetu CI/CD
+name: CareerSetu CI/CD Automated Workflow
 
 on:
   push:
@@ -8,38 +8,75 @@ on:
 
 jobs:
   test:
+    name: Backend API & Database Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt fastapi uvicorn httpx
+          pip install -r requirements.txt
 
-      - name: Run tests
-        run: pytest -q
+      - name: Run Backend & Database Pytest Suite
+        run: pytest -v
 
-  build-and-push:
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  frontend-build:
+    name: Next.js Frontend Compilation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t careersetu:latest .
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Smoke test container
+      - name: Install frontend dependencies
         run: |
-          docker run -d --name careersetu-test -p 8000:8000 careersetu:latest
-          sleep 8
+          cd frontend
+          npm ci
+
+      - name: Build Next.js Production App
+        run: |
+          cd frontend
+          npm run build
+
+  docker-integration:
+    name: Microservices Docker Smoke Tests
+    needs: [test, frontend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker services
+        run: |
+          docker compose -f docker-compose.yml build
+
+      - name: Start backend and ML microservices
+        run: |
+          docker compose -f docker-compose.yml up -d
+          sleep 12
+
+      - name: Smoke test API & Microservice endpoints
+        run: |
           curl -f http://127.0.0.1:8000/health
-          docker rm -f careersetu-test
+          curl -f http://127.0.0.1:8000/jobs
+          curl -f http://127.0.0.1:8000/companies/list
+          curl -f http://127.0.0.1:8001/health
+
+      - name: Tear down container services
+        run: docker compose -f docker-compose.yml down

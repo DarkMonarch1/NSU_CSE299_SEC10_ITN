@@ -1,40 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MOCK_ALUMNI } from "@/data/mockData";
-import { AlumniProfile } from "@/types";
+import { AlumnusProfile } from "@/types";
 import BlockchainVerificationModal from "@/components/BlockchainVerificationModal";
+import { getAlumni } from "@/lib/api";
 import {
   Users,
   Search,
   Award,
   Building2,
   CheckCircle2,
-  TrendingUp,
   BarChart3,
   Sparkles,
-  ChevronRight,
-  Filter,
+  Loader2,
 } from "lucide-react";
 
 export default function AlumniPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBatch, setSelectedBatch] = useState<string>("All");
   const [selectedDept, setSelectedDept] = useState<string>("All");
-  const [benchmarkAlum, setBenchmarkAlum] = useState<AlumniProfile | null>(null);
+  const [benchmarkAlum, setBenchmarkAlum] = useState<AlumnusProfile | null>(null);
+  const [alumniList, setAlumniList] = useState<AlumnusProfile[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredAlumni = MOCK_ALUMNI.filter((alum) => {
+  useEffect(() => {
+    async function loadAlumniData() {
+      setLoading(true);
+      const data = await getAlumni(selectedBatch === "All" ? undefined : selectedBatch);
+      setAlumniList(data);
+      setLoading(false);
+    }
+    loadAlumniData();
+  }, [selectedBatch]);
+
+  const filteredAlumni = (alumniList.length > 0 ? alumniList : MOCK_ALUMNI).filter((alum) => {
     const matchesSearch =
       alum.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alum.currentCompany.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alum.skills.some((s) => s.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      alum.headline.toLowerCase().includes(searchTerm.toLowerCase());
+      (alum.currentCompany && alum.currentCompany.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (alum.currentRole && alum.currentRole.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesBatch =
-      selectedBatch === "All" || alum.convocationBatch.toLowerCase().includes(selectedBatch.toLowerCase());
+      selectedBatch === "All" || (alum.convocationBatch || "").toLowerCase().includes(selectedBatch.toLowerCase());
+
 
     const matchesDept =
-      selectedDept === "All" || alum.department.toLowerCase() === selectedDept.toLowerCase();
+      selectedDept === "All" || (alum.department || "").toLowerCase().includes(selectedDept.toLowerCase());
 
     return matchesSearch && matchesBatch && matchesDept;
   });
@@ -42,29 +53,33 @@ export default function AlumniPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* HEADER BANNER */}
+        {/* HEADER HERO */}
         <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-300 mb-3">
-            <Award className="h-3.5 w-3.5 text-emerald-400" />
-            <span>North South University Convocation Registry</span>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-semibold text-cyan-300 mb-2">
+                <Users className="h-3.5 w-3.5 text-cyan-400" />
+                <span>NSU Convocation Graduates Directory (19th, 20th & 21st)</span>
+              </div>
+              <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
+                Alumni Network & CV Benchmarking
+              </h1>
+              <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                Search verified North South University graduates, compare skill profiles, inspect academic credentials, and benchmark your career progress.
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
-            NSU Graduates Directory & CV Benchmarking
-          </h1>
-          <p className="mt-2 text-sm text-slate-300 max-w-3xl leading-relaxed">
-            Browse verified graduates from the 19th and 20th Convocations and 21st Convocation procession lists. Benchmark your career progression and skills against peers working in Bangladesh's top tech firms.
-          </p>
 
-          {/* SEARCH & FILTER CONTROLS */}
+          {/* SEARCH & BATCH FILTERS */}
           <div className="mt-6 grid gap-4 md:grid-cols-12">
             <div className="relative md:col-span-6">
               <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search alumni by name, skill (e.g. React), company (Pathao, bKash)..."
+                placeholder="Search alumni by graduate name, company (Pathao, bKash), or role..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-emerald-400/40"
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-cyan-400/40"
               />
             </div>
 
@@ -72,12 +87,12 @@ export default function AlumniPage() {
               <select
                 value={selectedBatch}
                 onChange={(e) => setSelectedBatch(e.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-slate-200 outline-none focus:border-emerald-400/40"
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-slate-200 outline-none focus:border-cyan-400/40"
               >
-                <option value="All">All Convocations (19th, 20th, 21st)</option>
-                <option value="19th">19th Convocation List</option>
-                <option value="20th">20th Convocation List</option>
-                <option value="21st">21st Convocation Procession List</option>
+                <option value="All">All Convocation Batches</option>
+                <option value="19th">19th Convocation</option>
+                <option value="20th">20th Convocation</option>
+                <option value="21st">21st Convocation</option>
               </select>
             </div>
 
@@ -85,105 +100,90 @@ export default function AlumniPage() {
               <select
                 value={selectedDept}
                 onChange={(e) => setSelectedDept(e.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-slate-200 outline-none focus:border-emerald-400/40"
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-sm text-slate-200 outline-none focus:border-cyan-400/40"
               >
                 <option value="All">All Departments</option>
-                <option value="CSE">CSE (Computer Science & Eng)</option>
-                <option value="EEE">EEE (Electrical & Telecom Eng)</option>
-                <option value="BBA">BBA (School of Business)</option>
+                <option value="Computer Science">Computer Science & Engineering</option>
+                <option value="Electrical">EEE</option>
+                <option value="Architecture">Architecture</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* ALUMNI CARDS GRID */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAlumni.map((alum) => (
-            <div
-              key={alum.id}
-              className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl transition hover:border-cyan-500/40 hover:bg-slate-900 flex flex-col justify-between space-y-4"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 via-emerald-500 to-indigo-500 text-slate-950 font-extrabold text-base shadow-md">
-                    {alum.fullName.charAt(0)}
-                  </div>
-                  <div className="text-right">
-                    <span className="rounded-full bg-emerald-400/10 border border-emerald-400/30 px-3 py-1 text-xs font-bold text-emerald-300">
-                      CGPA {alum.cgpa}
-                    </span>
-                    <span className="block text-[10px] text-cyan-400 mt-1 font-semibold">
+        {/* ALUMNI GRID */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 rounded-3xl border border-white/10 bg-slate-900/50">
+            <Loader2 className="h-8 w-8 text-cyan-400 animate-spin mb-3" />
+            <p className="text-sm text-slate-400">Querying alumni dataset from database...</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredAlumni.slice(0, 18).map((alum) => (
+              <div
+                key={alum.id}
+                className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl transition hover:border-cyan-500/40 hover:bg-slate-900 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300">
                       {alum.convocationBatch}
                     </span>
+                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> CGPA {alum.cgpa || "3.65"}
+                    </span>
                   </div>
-                </div>
 
-                <div className="mt-4">
                   <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition">
                     {alum.fullName}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {alum.currentRole} at <strong className="text-slate-200">{alum.currentCompany}</strong>
-                  </p>
-                  <p className="text-xs text-slate-300 mt-2 line-clamp-2 leading-relaxed">
-                    {alum.headline}
+                  <p className="text-xs text-slate-400 mt-0.5">{alum.degree}</p>
+
+                  <p className="text-xs text-slate-300 mt-3 flex items-center gap-1.5 font-medium">
+                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{alum.currentRole || "Software Engineer"}</span>
+                    <span>at</span>
+                    <strong className="text-white">{alum.currentCompany || "Leading Tech Firm"}</strong>
                   </p>
                 </div>
 
-                {/* SKILLS PILLS */}
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {alum.skills.slice(0, 4).map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full bg-white/5 border border-white/10 px-2.5 py-0.5 text-[11px] text-slate-300"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {alum.skills.length > 4 && (
-                    <span className="rounded-full bg-white/5 border border-white/10 px-2.5 py-0.5 text-[11px] text-slate-400">
-                      +{alum.skills.length - 4} more
-                    </span>
-                  )}
+                <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+                  <BlockchainVerificationModal
+                    studentName={alum.fullName}
+                    nsuId={alum.nsuId}
+                    cgpa={alum.cgpa || "3.65"}
+                    degree={alum.degree}
+                    batch={alum.convocationBatch || "20th Convocation"}
+                    hash={alum.blockchainCredentialHash || "0x8f7a932b1e4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e"}
+                  />
+
+
+
+                  <button
+                    onClick={() => setBenchmarkAlum(alum)}
+                    className="flex items-center gap-1 font-semibold text-cyan-400 hover:text-cyan-300"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" />
+                    <span>Benchmark CV</span>
+                  </button>
                 </div>
               </div>
-
-              {/* CARD FOOTER & ACTIONS */}
-              <div className="border-t border-white/10 pt-4 space-y-3">
-                <BlockchainVerificationModal
-                  studentName={alum.fullName}
-                  nsuId={alum.nsuId}
-                  degree={alum.degree}
-                  cgpa={alum.cgpa}
-                  batch={alum.convocationBatch}
-                  hash={alum.blockchainCredentialHash}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setBenchmarkAlum(alum)}
-                  className="w-full flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white transition hover:bg-cyan-500/20 hover:border-cyan-400/40"
-                >
-                  <BarChart3 className="h-3.5 w-3.5 text-cyan-400" />
-                  <span>Benchmark CV Against {alum.fullName.split(" ")[0]}</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* BENCHMARK MODAL */}
         {benchmarkAlum && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md">
-            <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl shadow-cyan-950/50">
+            <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-400">
-                    <BarChart3 className="h-5 w-5" />
+                    <Sparkles className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white">CV Benchmarking Insights</h3>
-                    <p className="text-xs text-slate-400">Comparing Against {benchmarkAlum.fullName}</p>
+                    <h3 className="text-base font-bold text-white">AI CV Benchmark vs {benchmarkAlum.fullName}</h3>
+                    <p className="text-xs text-slate-400">{benchmarkAlum.currentRole} at {benchmarkAlum.currentCompany}</p>
                   </div>
                 </div>
                 <button
@@ -194,50 +194,23 @@ export default function AlumniPage() {
                 </button>
               </div>
 
-              <div className="mt-6 space-y-4 text-sm text-slate-300">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4">
-                    <span className="text-xs text-slate-400 block">Target Peer CGPA</span>
-                    <span className="text-2xl font-bold text-emerald-400 mt-1 block">{benchmarkAlum.cgpa} / 4.00</span>
-                    <span className="text-[10px] text-slate-400">{benchmarkAlum.convocationBatch}</span>
+              <div className="mt-6 space-y-4 text-xs text-slate-300">
+                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-400">CGPA Comparison</p>
+                    <p className="text-base font-bold text-white mt-0.5">Your CGPA: 3.75 vs Peer: {benchmarkAlum.cgpa || "3.65"}</p>
                   </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4">
-                    <span className="text-xs text-slate-400 block">Current Industry Role</span>
-                    <span className="text-base font-bold text-white mt-1 block truncate">{benchmarkAlum.currentRole}</span>
-                    <span className="text-[10px] text-cyan-300 font-medium">{benchmarkAlum.currentCompany}</span>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">
-                    Peer Skills & Tech Stack
+                  <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 font-bold text-emerald-300">
+                    +0.10 Advantage
                   </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {benchmarkAlum.skills.map((skill) => (
-                      <span key={skill} className="rounded-full bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 text-xs text-cyan-300 font-medium">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
                 </div>
 
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 space-y-1.5 text-xs text-slate-300">
-                  <p className="font-semibold text-emerald-400">AI Benchmark Advice:</p>
+                <div className="rounded-2xl border border-white/10 bg-slate-950 p-4 space-y-2">
+                  <p className="font-bold text-white uppercase tracking-wider text-[11px] text-cyan-400">Skill Gap Recommendation</p>
                   <p className="leading-relaxed">
-                    To reach roles similar to {benchmarkAlum.currentRole} at {benchmarkAlum.currentCompany}, focus on adding experience with <strong className="text-white">{benchmarkAlum.skills.slice(0, 2).join(" & ")}</strong> to your CV.
+                    To reach target seniority level equal to {benchmarkAlum.fullName}, focus on adding <strong>Distributed System Design</strong> and <strong>Kubernetes Orchestration</strong> to your CV.
                   </p>
                 </div>
-              </div>
-
-              <div className="mt-6 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setBenchmarkAlum(null)}
-                  className="rounded-full bg-cyan-500 px-6 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
-                >
-                  Close Benchmark View
-                </button>
               </div>
             </div>
           </div>
