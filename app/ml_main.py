@@ -34,6 +34,16 @@ class JobTrustAnalysisOutput(BaseModel):
     reason: str
 
 
+class HealthResponse(BaseModel):
+    status: str
+    message: str
+
+
+@app.get("/health", response_model=HealthResponse)
+def health_check() -> HealthResponse:
+    return HealthResponse(status="ok", message="CareerSetu ML microservice running")
+
+
 @app.post("/cv-analysis", response_model=CVAnalysisOutput)
 def analyze_cv(payload: CVAnalysisInput) -> CVAnalysisOutput:
     result = compute_cv_match_score(payload.resumeText, payload.targetRole)
