@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { apiSignup } from "@/lib/api";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function SignupPage() {
   const { user, login } = useAuth();
@@ -11,6 +13,8 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -18,10 +22,25 @@ export default function SignupPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    login({ name: name || "New Alumni", email, role: "alumni" });
-    router.push("/dashboard");
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await apiSignup({
+        email,
+        password,
+        fullName: name,
+        role: "alumni",
+      });
+      login(response.user, response.accessToken);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Failed to create account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,16 +56,33 @@ export default function SignupPage() {
               Build your alumni profile, get AI CV feedback, and explore trusted job opportunities from employers who value NSU talent.
             </p>
             <div className="mt-8 grid gap-4">
-              <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-emerald-400/30 hover:bg-white/10">
-                Sign up with Google
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-400 cursor-not-allowed opacity-60 flex items-center justify-between"
+              >
+                <span>Sign up with Google</span>
+                <span className="text-xs text-slate-500 font-mono">Coming Soon</span>
               </button>
-              <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-emerald-400/30 hover:bg-white/10">
-                Sign up with Email
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-400 cursor-not-allowed opacity-60 flex items-center justify-between"
+              >
+                <span>Sign up with Email</span>
+                <span className="text-xs text-slate-500 font-mono">Coming Soon</span>
               </button>
             </div>
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-slate-950/90 p-8">
+            {error && (
+              <div className="mb-6 flex items-center gap-2 rounded-2xl border border-pink-500/30 bg-pink-500/10 p-4 text-xs font-semibold text-pink-400">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium text-slate-200">Full name</label>
@@ -76,16 +112,19 @@ export default function SignupPage() {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Create a password"
+                  placeholder="Create a password (min 8 characters)"
+                  minLength={8}
                   className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-400/40 focus:ring-2 focus:ring-emerald-400/10"
                   required
                 />
               </div>
               <button
                 type="submit"
-                className="w-full rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
               >
-                Create account
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                <span>{isLoading ? "Creating account..." : "Create account"}</span>
               </button>
               <p className="text-center text-sm text-slate-400">
                 Already a member?{' '}

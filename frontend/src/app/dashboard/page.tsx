@@ -29,12 +29,24 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadJobs() {
       setLoading(true);
-      const data = await getJobs();
-      setJobs(data.slice(0, 3));
-      setLoading(false);
+      try {
+        const data = await getJobs();
+        setJobs(data.slice(0, 3));
+      } catch (error) {
+        console.error("Failed to load dashboard job recommendations:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadJobs();
   }, []);
+
+  const displayName = user?.fullName || profile.fullName || "NSU Alumnus";
+  const userNsuId = user?.nsuId || "1911234042";
+  const userBatch = profile.batch || "20th Convocation";
+  const credentialHash = `0x${Array.from(displayName + userNsuId)
+    .reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0x8f7a932b)
+    .toString(16)}e4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e`.slice(0, 42);
 
   return (
     <ProtectedRoute>
@@ -49,21 +61,21 @@ export default function DashboardPage() {
                   <span>NSU Alumni Dashboard</span>
                 </div>
                 <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
-                  Welcome back, {user?.name || profile.fullName}!
+                  Welcome back, {displayName}!
                 </h1>
                 <p className="text-sm text-slate-300 mt-1">
-                  {profile.degree} (CGPA: <span className="text-emerald-400 font-bold">{profile.cgpa}</span>) · NSU Convocation Alumni
+                  {profile.degree} (CGPA: <span className="text-emerald-400 font-bold">{profile.cgpa}</span>) · {userBatch}
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <BlockchainVerificationModal
-                  studentName={profile.fullName}
-                  nsuId="1911234042"
+                  studentName={displayName}
+                  nsuId={userNsuId}
                   degree={profile.degree}
                   cgpa={profile.cgpa}
-                  batch="20th Convocation"
-                  hash="0x8f7a932b1e4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e"
+                  batch={userBatch}
+                  hash={credentialHash}
                 />
                 <Link
                   href="/profile"
@@ -80,13 +92,13 @@ export default function DashboardPage() {
             <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl">
               <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Profile Completeness</p>
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-3xl font-extrabold text-white">85%</span>
+                <span className="text-3xl font-extrabold text-white">90%</span>
                 <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs text-cyan-300 font-semibold">
-                  Nearly Ready
+                  Verified Active
                 </span>
               </div>
               <div className="mt-3 h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full w-[85%] rounded-full bg-cyan-400" />
+                <div className="h-full w-[90%] rounded-full bg-cyan-400" />
               </div>
             </div>
 
@@ -176,16 +188,16 @@ export default function DashboardPage() {
 
                 <ul className="space-y-3 text-xs text-slate-300">
                   <li className="rounded-2xl border border-white/5 bg-white/5 p-3">
-                    <p className="font-semibold text-white">Application Submitted</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Applied to AI Product Manager at ByteScale Labs</p>
+                    <p className="font-semibold text-white">Profile Synchronized</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Authenticated session secured with JWT credentials</p>
                   </li>
                   <li className="rounded-2xl border border-white/5 bg-white/5 p-3">
-                    <p className="font-semibold text-cyan-300">AI CV Grooming Completed</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">ATS compatibility score refreshed (92/100)</p>
+                    <p className="font-semibold text-cyan-300">AI CV Grooming Ready</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Resume matcher active with keyword analysis</p>
                   </li>
                   <li className="rounded-2xl border border-white/5 bg-white/5 p-3">
                     <p className="font-semibold text-indigo-300">Degree Hash Verified</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">NSU 20th Convocation record cryptographically hashed</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">NSU {userBatch} record verified</p>
                   </li>
                 </ul>
               </div>

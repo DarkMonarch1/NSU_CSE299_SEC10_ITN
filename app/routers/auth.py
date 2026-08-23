@@ -2,22 +2,27 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import UserModel
-from app.schemas import UserCreate, UserLogin, UserResponse
+from app.schemas import UserCreate, UserLogin, UserResponse, TokenResponse
+from app.auth_utils import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    get_current_user,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/signup", response_model=UserResponse)
-def signup(payload: UserCreate, db: Session = Depends(get_db)) -> UserResponse:
+@router.post("/signup", response_model=TokenResponse)
+def signup(payload: UserCreate, db: Session = Depends(get_db)) -> TokenResponse:
     existing = db.query(UserModel).filter(UserModel.email == payload.email).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email address is already registered."
+            detail="Email address is already registered.",
         )
 
-    # In production, use passlib/bcrypt. Here we use a clean hash format for local dev.
-    hashed_password = f"hashed:{payload.password}"
+    hashed_password = hash_password(payload.password)
     user = UserModel(
         email=payload.email,
         password_hash=hashed_password,
@@ -29,52 +34,39 @@ def signup(payload: UserCreate, db: Session = Depends(get_db)) -> UserResponse:
     db.add(user)
     db.commit()
     db.refresh(user)
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        fullName=user.full_name,
-        role=user.role,
-        nsuId=user.nsu_id,
-        department=user.department,
+
+    access_token = create_access_token(data={"sub": user.email, "role": user.role})
+    return TokenResponse(
+        accessToken=access_token,
+        user=UserResponse.from_model(user),
     )
 
 
-@router.post("/login", response_model=UserResponse)
-def login(payload: UserLogin, db: Session = Depends(get_db)) -> UserResponse:
+@router.post("/login", response_model=TokenResponse)
+def login(payload: UserLogin, db: Session = Depends(get_db)) -> TokenResponse:
     user = db.query(UserModel).filter(UserModel.email == payload.email).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password credentials."
+            detail="Invalid email or password credentials.",
         )
 
-    # Verify password
-    if not (user.password_hash == f"hashed:{payload.password}" or user.password_hash.startswith("pbkdf2")):
+    if not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password credentials."
+            detail="Invalid email or password credentials.",
         )
 
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        fullName=user.full_name,
-        role=user.role,
-        nsuId=user.nsu_id,
-        department=user.department,
+    access_token = create_access_token(data={"sub": user.email, "role": user.role})
+    return TokenResponse(
+        accessToken=access_token,
+        user=UserResponse.from_model(user),
     )
 
 
-@router.get("/me/{email}", response_model=UserResponse)
-def get_user_profile(email: str, db: Session = Depends(get_db)) -> UserResponse:
-    user = db.query(UserModel).filter(UserModel.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User profile not found.")
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        fullName=user.full_name,
-        role=user.role,
-        nsuId=user.nsu_id,
-        department=user.department,
-    )
+@router.get("/me", response_model=UserResponse)
+def get_user_profile(
+    current_user: UserModel = Depends(get_current_user),
+) -> UserResponse:
+    """Return the authenticated user's own profile. No IDOR possible."""
+    return UserResponse.from_model(current_user)

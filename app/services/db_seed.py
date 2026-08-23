@@ -106,10 +106,12 @@ def seed_database(db: Session) -> None:
     # 4. Seed Default System Users
     if db.query(UserModel).count() == 0:
         logger.info("Seeding Default Users into Database...")
+        from app.auth_utils import hash_password
+
         users = [
             UserModel(
                 email="admin@northsouth.edu",
-                password_hash="pbkdf2:sha256:admin123",
+                password_hash=hash_password("admin123"),
                 full_name="NSU Career Admin",
                 role="admin",
                 nsu_id="ADMIN001",
@@ -117,7 +119,7 @@ def seed_database(db: Session) -> None:
             ),
             UserModel(
                 email="alumni@northsouth.edu",
-                password_hash="pbkdf2:sha256:alumni123",
+                password_hash=hash_password("alumni123"),
                 full_name="Tanvir Ahmed",
                 role="alumni",
                 nsu_id="1910923",
@@ -125,7 +127,7 @@ def seed_database(db: Session) -> None:
             ),
             UserModel(
                 email="recruiter@pathao.com",
-                password_hash="pbkdf2:sha256:recruiter123",
+                password_hash=hash_password("employer123"),
                 full_name="Pathao Talent Acquisition",
                 role="employer",
                 nsu_id="EMP001",

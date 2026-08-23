@@ -1,54 +1,70 @@
-export type Role = "alumni" | "employer" | "admin" | "student";
-
-export type ConvocationBatch = "19th Convocation" | "20th Convocation" | "21st Convocation";
-
-export type User = {
-  id: string;
-  name: string;
+// Unified User type matching the backend UserResponse schema (AUD-16).
+export interface User {
+  id: number;
   email: string;
-  role: Role;
-  convocationBatch?: ConvocationBatch;
+  fullName: string;
+  role: "alumni" | "employer" | "admin";
   nsuId?: string;
-  avatarUrl?: string;
-};
+  department?: string;
+}
 
-export type AlumniProfile = {
-  id: string;
-  nsuId: string;
+// Auth response matching the backend TokenResponse schema.
+export interface AuthResponse {
+  accessToken: string;
+  tokenType: string;
+  user: User;
+}
+
+export interface UserProfile {
   fullName: string;
   headline: string;
   degree: string;
   department: string;
   cgpa: string;
-  convocationBatch: ConvocationBatch;
-  graduationYear: number;
+  batch: string;
+  skills: string;
+  bio: string;
+}
+
+export interface AlumnusProfile {
+  id: string;
+  nsuId: string;
+  fullName: string;
+  headline?: string;
+  degree: string;
+  department: string;
+  cgpa: string;
+  convocationBatch?: string;
+  batch?: string;
+  procession?: string;
+  graduationYear?: number;
   currentCompany: string;
   currentRole: string;
-  location: string;
-  skills: string[];
-  bio: string;
-  isVerified: boolean;
-  blockchainCredentialHash: string;
-  atsScore: number;
-  featuredCv: boolean;
-  avatarUrl?: string;
-  experienceYears: number;
-};
+  location?: string;
+  skills?: string[];
+  bio?: string;
+  isVerified?: boolean;
+  blockchainCredentialHash?: string;
+  atsScore?: number;
+  featuredCv?: boolean;
+  experienceYears?: number;
+}
 
-export type JobPosting = {
+export type AlumniProfile = AlumnusProfile;
+
+export interface JobPosting {
   id: string;
   slug: string;
   title: string;
   company: string;
-  companyLogo?: string;
   location: string;
-  workType: "Remote" | "Hybrid" | "On-site";
-  category: "Software Development" | "AI & Data Science" | "Product & Project Management" | "UI/UX & Design" | "Cybersecurity" | "Business Analytics";
+  workType: string;
+  category: string;
   salary: string;
-  departmentTarget?: string;
-  targetConvocation?: string;
-  trustScore: number; // e.g. 98 -> 98% Legit AI Fraud Detection Score
-  aiMatchScore?: number; // e.g. 94% fit for current user
+  departmentTarget: string;
+  targetConvocation: string;
+  trustScore: number;
+  aiMatchScore: number;
   description: string;
   requirements: string[];
   responsibilities: string[];
@@ -58,52 +74,50 @@ export type JobPosting = {
   applicationCount: number;
   isFeatured: boolean;
   companyVerified: boolean;
-};
+  isApproved?: boolean;
+}
 
-export type CVGroomingReport = {
+export interface MagazineArticle {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  companyName: string;
+  author: string;
+  authorTitle: string;
+  date: string;
+  readTime: string;
+  featured: boolean;
+  content: string;
+}
+
+export interface CVGroomingReport {
   candidateName: string;
   targetRole: string;
   atsScore: number;
-  overallRating: "Needs Improvement" | "Good Fit" | "Exceptional Candidate";
+  overallRating: string;
   skillsFound: string[];
   missingSkills: string[];
   strengths: string[];
   actionItems: string[];
   suggestedKeywords: string[];
-};
+}
 
-export type Company = {
+export interface Company {
   id: number;
   name: string;
   industry: string;
   location: string;
   verified: boolean;
   trustScore: number;
-  website?: string;
-  address?: string;
-  email?: string;
-  contact_number?: string;
-};
+}
 
-export type AlumnusProfile = AlumniProfile & {
-  batch?: string;
-  procession?: string;
-  nsuId: string;
-};
-
-export type MagazineArticle = {
-
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: "Employer Spotlight" | "NSU Success Story" | "Industry Insights" | "Tech Trends";
-  companyName?: string;
-  author: string;
-  authorTitle: string;
-  date: string;
-  readTime: string;
-  coverImage?: string;
-  featured: boolean;
-  content: string;
-};
+export interface AdminStats {
+  totalUsers: number;
+  totalAlumni: number;
+  totalJobs: number;
+  totalApplications: number;
+  verifiedCompanies: number;
+  scamAttemptsBlocked: number;
+}

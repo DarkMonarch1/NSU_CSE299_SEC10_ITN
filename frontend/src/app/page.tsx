@@ -31,13 +31,18 @@ export default function Home() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const [jobs, alumni] = await Promise.all([
-        getJobs(undefined, "All", "All"),
-        getAlumni("20th Convocation"),
-      ]);
-      setFeaturedJobs(jobs.slice(0, 4));
-      setTopAlumni(alumni.slice(0, 3));
-      setLoading(false);
+      try {
+        const [jobs, alumni] = await Promise.all([
+          getJobs(undefined, "All", "All"),
+          getAlumni("20th Convocation"),
+        ]);
+        setFeaturedJobs(jobs.slice(0, 4));
+        setTopAlumni(alumni.slice(0, 3));
+      } catch (err) {
+        console.error("Failed to load home page data:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, []);

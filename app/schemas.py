@@ -1,13 +1,16 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 from datetime import datetime
 
 
-# User Schemas
+# ---------------------------------------------------------------------------
+# Auth / User Schemas
+# ---------------------------------------------------------------------------
+
 class UserCreate(BaseModel):
     email: str
-    password: str
-    fullName: str
+    password: str = Field(min_length=8, max_length=128)
+    fullName: str = Field(min_length=1, max_length=255)
     role: Optional[str] = "alumni"
     nsuId: Optional[str] = None
     department: Optional[str] = None
@@ -16,6 +19,13 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+
+
+class TokenResponse(BaseModel):
+    """Returned on successful login / signup."""
+    accessToken: str
+    tokenType: str = "bearer"
+    user: "UserResponse"
 
 
 class UserResponse(BaseModel):
@@ -28,8 +38,23 @@ class UserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @classmethod
+    def from_model(cls, model) -> "UserResponse":
+        """Construct from a SQLAlchemy UserModel, mapping snake_case → camelCase."""
+        return cls(
+            id=model.id,
+            email=model.email,
+            fullName=model.full_name,
+            role=model.role,
+            nsuId=model.nsu_id,
+            department=model.department,
+        )
 
+
+# ---------------------------------------------------------------------------
 # Alumni Schemas
+# ---------------------------------------------------------------------------
+
 class AlumniResponse(BaseModel):
     id: str
     nsuId: str
@@ -45,7 +70,10 @@ class AlumniResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ---------------------------------------------------------------------------
 # Company Schemas
+# ---------------------------------------------------------------------------
+
 class CompanyResponse(BaseModel):
     id: int
     name: str
@@ -57,17 +85,20 @@ class CompanyResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ---------------------------------------------------------------------------
 # Job Schemas
+# ---------------------------------------------------------------------------
+
 class JobCreate(BaseModel):
-    title: str
-    company: str
-    location: str
+    title: str = Field(max_length=255)
+    company: str = Field(max_length=255)
+    location: str = Field(max_length=255)
     workType: str
     category: str
-    salary: str
+    salary: str = Field(max_length=100)
     departmentTarget: str
     targetConvocation: str
-    description: str
+    description: str = Field(max_length=5000)
     requirements: List[str]
     responsibilities: List[str]
     benefits: List[str]
@@ -101,9 +132,9 @@ class JobResponse(BaseModel):
 
 
 class JobApplicationCreate(BaseModel):
-    applicantName: str
-    applicantEmail: str
-    resumeText: str
+    applicantName: str = Field(max_length=255)
+    applicantEmail: str = Field(max_length=255)
+    resumeText: str = Field(max_length=50000)
 
 
 class JobApplicationResponse(BaseModel):
@@ -118,10 +149,13 @@ class JobApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ---------------------------------------------------------------------------
 # ML Schemas
+# ---------------------------------------------------------------------------
+
 class CVAnalysisInput(BaseModel):
-    resumeText: str
-    targetRole: str
+    resumeText: str = Field(max_length=50000)
+    targetRole: str = Field(max_length=255)
 
 
 class CVAnalysisOutput(BaseModel):
@@ -130,13 +164,15 @@ class CVAnalysisOutput(BaseModel):
     matchScore: int
     missingSkills: List[str]
     suggestions: List[str]
+    skillsFound: Optional[List[str]] = []
+    overallRating: Optional[str] = "Strong Candidate"
 
 
 class JobTrustAnalysisInput(BaseModel):
-    jobTitle: str
-    company: str
-    location: str
-    description: str
+    jobTitle: str = Field(max_length=255)
+    company: str = Field(max_length=255)
+    location: str = Field(max_length=255)
+    description: str = Field(max_length=5000)
     requirements: List[str]
 
 
@@ -146,7 +182,10 @@ class JobTrustAnalysisOutput(BaseModel):
     reason: str
 
 
+# ---------------------------------------------------------------------------
 # Admin Schemas
+# ---------------------------------------------------------------------------
+
 class AdminStatsResponse(BaseModel):
     totalUsers: int
     totalAlumni: int
@@ -154,3 +193,8 @@ class AdminStatsResponse(BaseModel):
     totalApplications: int
     verifiedCompanies: int
     scamAttemptsBlocked: int
+
+
+class JobApprovalUpdate(BaseModel):
+    """Used by admin to approve or flag a job posting."""
+    isApproved: bool

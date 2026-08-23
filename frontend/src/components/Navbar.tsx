@@ -127,9 +127,9 @@ export default function Navbar() {
                 }`}
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-bold">
-                  {user.name.charAt(0)}
+                  {(user.fullName || "U").charAt(0)}
                 </div>
-                <span className="hidden sm:inline font-medium">{user.name}</span>
+                <span className="hidden sm:inline font-medium">{user.fullName}</span>
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 uppercase">
                   {user.role}
                 </span>

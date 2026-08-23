@@ -26,6 +26,10 @@ export default function PaymentModal({
 
   if (!isOpen) return null;
 
+  // AUD-14: TODO — In production, replace client-side timeout with real payment gateway
+  // integration (e.g. SSLCommerz, bKash Merchant API, or PortPos). The backend should expose
+  // POST /payments/initiate and POST /payments/verify endpoints to ensure transactions are verified
+  // server-side before unlocking candidate transcripts or publishing paid job listings.
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);

@@ -29,9 +29,14 @@ export default function JobsPage() {
   useEffect(() => {
     async function loadJobs() {
       setLoading(true);
-      const fetched = await getJobs(searchTerm, selectedCategory, selectedType);
-      setJobs(fetched);
-      setLoading(false);
+      try {
+        const fetched = await getJobs(searchTerm, selectedCategory, selectedType);
+        setJobs(fetched);
+      } catch (err) {
+        console.error("Failed to load jobs:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     loadJobs();
   }, [searchTerm, selectedType, selectedCategory]);
@@ -206,7 +211,7 @@ export default function JobsPage() {
                 </div>
                 <div className="rounded-2xl border border-white/5 bg-white/5 p-3.5">
                   <p className="text-xs text-slate-400">Average Salary Range</p>
-                  <p className="text-xl font-bold text-emerald-400 mt-0.5">BDT 140k - 200k</p>
+                  <p className="text-xl font-bold text-emerald-400 mt-0.5">BDT 45K - 95K</p>
                 </div>
               </div>
             </div>

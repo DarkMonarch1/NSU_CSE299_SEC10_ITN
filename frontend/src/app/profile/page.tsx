@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const [formData, setFormData] = useState(profile);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -116,12 +116,14 @@ export default function ProfilePage() {
 
                 <div className="border-t border-white/10 pt-4 flex items-center justify-between">
                   <BlockchainVerificationModal
-                    studentName={formData.fullName}
-                    nsuId="1911234042"
-                    degree={formData.degree}
-                    cgpa={formData.cgpa}
-                    batch="20th Convocation"
-                    hash="0x8f7a932b1e4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e"
+                    studentName={formData.fullName || profile.fullName}
+                    nsuId={user?.nsuId || "1911234042"}
+                    degree={formData.degree || profile.degree}
+                    cgpa={formData.cgpa || profile.cgpa}
+                    batch={profile.batch || "20th Convocation"}
+                    hash={`0x${Array.from((formData.fullName || profile.fullName) + (user?.nsuId || "1911234042"))
+                      .reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0x8f7a932b)
+                      .toString(16)}e4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e`.slice(0, 42)}
                   />
 
                   <button

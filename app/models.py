@@ -1,8 +1,13 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
+
+
+def _utc_now() -> datetime:
+    """Timezone-aware UTC timestamp for column defaults."""
+    return datetime.now(timezone.utc)
 
 
 class UserModel(Base):
@@ -15,7 +20,7 @@ class UserModel(Base):
     role = Column(String(50), default="alumni")  # alumni, employer, admin
     nsu_id = Column(String(50), nullable=True)
     department = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
 
 
 class AlumnusModel(Base):
@@ -31,7 +36,7 @@ class AlumnusModel(Base):
     cgpa = Column(String(10), default="3.65")
     current_company = Column(String(255), default="Leading Tech Firm")
     current_role = Column(String(255), default="Software Engineer")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
 
 
 class CompanyModel(Base):
@@ -44,7 +49,7 @@ class CompanyModel(Base):
     verified = Column(Boolean, default=True)
     trust_score = Column(Integer, default=95)
     website = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
 
 
 class JobPostingModel(Base):
@@ -70,8 +75,9 @@ class JobPostingModel(Base):
     posted_date = Column(String(100), default="2026-08-18")
     application_count = Column(Integer, default=0)
     is_featured = Column(Boolean, default=False)
+    is_approved = Column(Boolean, default=True)
     company_verified = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
 
     @property
     def requirements(self) -> list[str]:
@@ -117,7 +123,7 @@ class JobApplicationModel(Base):
     resume_text = Column(Text, nullable=False)
     match_score = Column(Integer, default=85)
     status = Column(String(50), default="Submitted")
-    applied_at = Column(DateTime, default=datetime.utcnow)
+    applied_at = Column(DateTime, default=_utc_now)
 
 
 class CVAnalysisModel(Base):
@@ -130,7 +136,7 @@ class CVAnalysisModel(Base):
     match_score = Column(Integer, nullable=False)
     missing_skills_json = Column(Text, default="[]")
     suggestions_json = Column(Text, default="[]")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)
 
 
 class JobTrustAuditModel(Base):
@@ -143,7 +149,7 @@ class JobTrustAuditModel(Base):
     trust_score = Column(Integer, nullable=False)
     risk_label = Column(String(100), nullable=False)
     reason = Column(Text, nullable=False)
-    audited_at = Column(DateTime, default=datetime.utcnow)
+    audited_at = Column(DateTime, default=_utc_now)
 
 
 class MagazineArticleModel(Base):
@@ -159,4 +165,4 @@ class MagazineArticleModel(Base):
     content = Column(Text, nullable=False)
     views = Column(Integer, default=1200)
     sponsored_by = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utc_now)

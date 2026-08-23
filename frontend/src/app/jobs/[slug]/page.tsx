@@ -15,6 +15,7 @@ import {
   Send,
   Lock,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 export default function JobDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -25,19 +26,25 @@ export default function JobDetailPage({ params }: { params: Promise<{ slug: stri
   const [applied, setApplied] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [coverNote, setCoverNote] = useState("");
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadJob() {
       setLoading(true);
-      const data = await getJobBySlug(resolvedParams.slug);
-      setJob(data);
-      if (data) {
-        setCoverNote(
-          `Dear ${data.company} Hiring Team,\nI am an NSU CSE graduate interested in the ${data.title} role. My profile includes verified CGPA credentials and full stack experience.`
-        );
+      try {
+        const data = await getJobBySlug(resolvedParams.slug);
+        setJob(data);
+        if (data) {
+          setCoverNote(
+            `Dear ${data.company} Hiring Team,\nI am an NSU CSE graduate interested in the ${data.title} role. My profile includes verified CGPA credentials and full stack experience.`
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load job details:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     loadJob();
   }, [resolvedParams.slug]);
@@ -45,16 +52,25 @@ export default function JobDetailPage({ params }: { params: Promise<{ slug: stri
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!job) return;
+    setIsSubmitting(true);
+    setApplyError(null);
 
-    await submitJobApplication(
-      job.id,
-      profile.fullName,
-      user?.email || "alumni@northsouth.edu",
-      coverNote
-    );
+    try {
+      await submitJobApplication(
+        job.id,
+        user?.fullName || profile.fullName || "NSU Graduate",
+        user?.email || "alumni@northsouth.edu",
+        coverNote
+      );
 
-    setApplied(true);
-    setShowApplyModal(false);
+      setApplied(true);
+      setShowApplyModal(false);
+    } catch (err: any) {
+      console.error("Failed to submit job application:", err);
+      setApplyError(err.message || "Failed to submit job application. Please check your login status.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -206,7 +222,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ slug: stri
               <div className="space-y-2 text-xs text-slate-300">
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-slate-400">Alumnus Name</span>
-                  <span className="font-semibold text-white">{profile.fullName}</span>
+                  <span className="font-semibold text-white">{user?.fullName || profile.fullName}</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-slate-400">Academic CGPA</span>
@@ -236,6 +252,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ slug: stri
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowApplyModal(false)}
                   className="rounded-full bg-white/5 p-2 text-slate-400 hover:bg-white/10 hover:text-white"
                 >
@@ -243,10 +260,17 @@ export default function JobDetailPage({ params }: { params: Promise<{ slug: stri
                 </button>
               </div>
 
+              {applyError && (
+                <div className="mt-4 flex items-center gap-2 rounded-2xl border border-pink-500/30 bg-pink-500/10 p-3 text-xs font-semibold text-pink-400">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{applyError}</span>
+                </div>
+              )}
+
               <form onSubmit={handleApply} className="mt-6 space-y-4 text-sm text-slate-300">
                 <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 space-y-1 text-xs">
                   <p className="font-bold text-emerald-400">Verified Profile Attachment</p>
-                  <p>Name: <strong className="text-white">{profile.fullName}</strong></p>
+                  <p>Name: <strong className="text-white">{user?.fullName || profile.fullName}</strong></p>
                   <p>Degree: <strong className="text-white">{profile.degree}</strong> (CGPA {profile.cgpa})</p>
                 </div>
 
@@ -269,9 +293,11 @@ export default function JobDetailPage({ params }: { params: Promise<{ slug: stri
 
                 <button
                   type="submit"
-                  className="w-full rounded-full bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center gap-2 rounded-full bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
                 >
-                  Submit Application Now
+                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <span>{isSubmitting ? "Submitting Application..." : "Submit Application Now"}</span>
                 </button>
               </form>
             </div>

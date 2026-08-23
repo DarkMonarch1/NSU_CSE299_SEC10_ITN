@@ -5,10 +5,16 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import JobPostingModel, JobApplicationModel
+from app.models import JobPostingModel, JobApplicationModel, UserModel
 from app.schemas import JobCreate, JobResponse, JobApplicationCreate, JobApplicationResponse
+from app.auth_utils import get_current_user, require_role
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+
+def _escape_like(value: str) -> str:
+    """Escape LIKE-special characters to prevent LIKE-injection."""
+    return value.replace("%", "\\%").replace("_", "\\_")
 
 
 def _to_job_response(model: JobPostingModel) -> JobResponse:
@@ -47,10 +53,10 @@ def list_jobs(
     query = db.query(JobPostingModel)
 
     if category and category.lower() != "all":
-        query = query.filter(JobPostingModel.category.ilike(f"%{category}%"))
+        query = query.filter(JobPostingModel.category.ilike(f"%{_escape_like(category)}%"))
 
     if workType and workType.lower() != "all":
-        query = query.filter(JobPostingModel.work_type.ilike(f"%{workType}%"))
+        query = query.filter(JobPostingModel.work_type.ilike(f"%{_escape_like(workType)}%"))
 
     jobs = query.all()
 
@@ -65,7 +71,11 @@ def list_jobs(
 
 
 @router.post("/", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
-def create_job(payload: JobCreate, db: Session = Depends(get_db)) -> JobResponse:
+def create_job(
+    payload: JobCreate,
+    current_user: UserModel = Depends(require_role("employer", "admin")),
+    db: Session = Depends(get_db),
+) -> JobResponse:
     raw_slug = re.sub(r"[^\w\s-]", "", payload.title.lower())
     slug = re.sub(r"[-\s]+", "-", raw_slug).strip("-")
     slug = f"{slug}-{payload.company.lower().replace(' ', '')}"
@@ -93,11 +103,12 @@ def create_job(payload: JobCreate, db: Session = Depends(get_db)) -> JobResponse
         requirements_json=json.dumps(payload.requirements),
         responsibilities_json=json.dumps(payload.responsibilities),
         benefits_json=json.dumps(payload.benefits),
-        posted_by=payload.postedBy or "NSU Recruiter",
+        posted_by=current_user.full_name,
         posted_date="2026-08-18",
         application_count=0,
         is_featured=True,
         company_verified=True,
+        is_approved=True,
     )
     db.add(model)
     db.commit()
@@ -118,7 +129,12 @@ def get_job_by_slug(slug: str, db: Session = Depends(get_db)) -> JobResponse:
 
 
 @router.post("/{job_id}/apply", response_model=JobApplicationResponse)
-def apply_to_job(job_id: str, payload: JobApplicationCreate, db: Session = Depends(get_db)) -> JobApplicationResponse:
+def apply_to_job(
+    job_id: str,
+    payload: JobApplicationCreate,
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> JobApplicationResponse:
     job = db.query(JobPostingModel).filter(JobPostingModel.id == job_id).first()
     if not job:
         job = db.query(JobPostingModel).filter(JobPostingModel.slug == job_id).first()
@@ -126,10 +142,21 @@ def apply_to_job(job_id: str, payload: JobApplicationCreate, db: Session = Depen
     if not job:
         raise HTTPException(status_code=404, detail="Target job posting not found")
 
+    # Prevent duplicate applications from the same user
+    existing_app = db.query(JobApplicationModel).filter(
+        JobApplicationModel.job_id == job.id,
+        JobApplicationModel.applicant_email == current_user.email,
+    ).first()
+    if existing_app:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You have already applied to this job.",
+        )
+
     application = JobApplicationModel(
         job_id=job.id,
-        applicant_name=payload.applicantName,
-        applicant_email=payload.applicantEmail,
+        applicant_name=current_user.full_name,
+        applicant_email=current_user.email,
         resume_text=payload.resumeText,
         match_score=92,
         status="Submitted",

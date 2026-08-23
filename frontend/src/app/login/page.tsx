@@ -4,24 +4,49 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { apiLogin } from "@/lib/api";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      if (user.role === "admin") {
+        router.push("/admin");
+      } else if (user.role === "employer") {
+        router.push("/employer");
+      } else {
+        router.push("/dashboard");
+      }
     }
   }, [user, router]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const userName = email ? email.split("@")[0].replace(".", " ") : "NSU Alumnus";
-    login({ name: userName, email, role: "alumni" });
-    router.push("/dashboard");
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await apiLogin(email, password);
+      login(response.user, response.accessToken);
+      if (response.user.role === "admin") {
+        router.push("/admin");
+      } else if (response.user.role === "employer") {
+        router.push("/employer");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to log in. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,16 +62,33 @@ export default function LoginPage() {
               Access your verified alumni profile, job recommendations, and employer connections with one secure login.
             </p>
             <div className="mt-8 space-y-4">
-              <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-cyan-400/30 hover:bg-white/10">
-                Continue with Google
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-400 cursor-not-allowed opacity-60 flex items-center justify-between"
+              >
+                <span>Continue with Google</span>
+                <span className="text-xs text-slate-500 font-mono">Coming Soon</span>
               </button>
-              <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-cyan-400/30 hover:bg-white/10">
-                Continue with LinkedIn
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-400 cursor-not-allowed opacity-60 flex items-center justify-between"
+              >
+                <span>Continue with LinkedIn</span>
+                <span className="text-xs text-slate-500 font-mono">Coming Soon</span>
               </button>
             </div>
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-slate-950/90 p-8">
+            {error && (
+              <div className="mb-6 flex items-center gap-2 rounded-2xl border border-pink-500/30 bg-pink-500/10 p-4 text-xs font-semibold text-pink-400">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium text-slate-200">Email</label>
@@ -72,9 +114,11 @@ export default function LoginPage() {
               </div>
               <button
                 type="submit"
-                className="w-full rounded-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-50"
               >
-                Login
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                <span>{isLoading ? "Logging in..." : "Login"}</span>
               </button>
               <p className="text-center text-sm text-slate-400">
                 Don’t have an account?{' '}
