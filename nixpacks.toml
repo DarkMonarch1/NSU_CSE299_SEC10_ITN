@@ -6,6 +6,3 @@ cmds = ["pip install -r requirements.txt"]
 
 [start]
 cmd = "python scripts/migrate_and_start.py"
-
-[variables]
-PORT = "8000"

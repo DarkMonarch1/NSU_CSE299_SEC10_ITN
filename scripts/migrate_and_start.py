@@ -8,7 +8,6 @@ This script will:
 import os
 import sys
 import logging
-import subprocess
 
 # Add the app directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -66,10 +65,10 @@ def start_application():
     # Import uvicorn directly and run
     import uvicorn
     
-    # Get the port from environment variable or default to 8000
+    # Railway injects PORT; do not hardcode 8000 in nixpacks or the proxy 502s
     port = int(os.environ.get("PORT", 8000))
     
-    logger.info(f"Starting on port {port} with proxy_headers enabled")
+    logger.info(f"Starting on 0.0.0.0:{port} with proxy_headers enabled")
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
@@ -81,9 +80,14 @@ def start_application():
 
 if __name__ == "__main__":
     logger.info("Railway startup script initiated...")
-    
-    # Step 1: Check and migrate database
-    check_and_migrate()
-    
-    # Step 2: Start the application
+    db_url = os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_PRIVATE_URL") or "(sqlite fallback)"
+    if "://" in db_url:
+        scheme, _, rest = db_url.partition("://")
+        host = rest.split("@")[-1] if "@" in rest else rest
+        logger.info(f"Database target: {scheme}://{host}")
+    else:
+        logger.info(f"Database target: {db_url}")
+
+    # Listen first. Seeding runs in FastAPI lifespan so /health is not blocked.
+    # A blocking seed here is what caused Railway 502 "Application failed to respond".
     start_application()

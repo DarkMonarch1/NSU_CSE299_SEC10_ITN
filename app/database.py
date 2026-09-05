@@ -3,30 +3,55 @@ from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
-DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_PRIVATE_URL") or "sqlite:///./careersetu.db"
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+def normalize_database_url(raw_url: str) -> str:
+    """Make Railway/Heroku Postgres URLs usable by SQLAlchemy + psycopg2."""
+    url = raw_url.strip()
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
+    if url.startswith("postgresql://") and "+psycopg2" not in url and "+psycopg" not in url:
+        url = "postgresql+psycopg2://" + url[len("postgresql://") :]
 
-# Configure engine based on database type
+    if "sqlite" in url:
+        return url
+
+    if "sslmode=" not in url:
+        separator = "&" if "?" in url else "?"
+        if "railway.internal" in url or "postgres.railway.internal" in url:
+            url = f"{url}{separator}sslmode=disable"
+        elif "rlwy.net" in url or "railway.app" in url:
+            url = f"{url}{separator}sslmode=require"
+
+    if "connect_timeout=" not in url:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}connect_timeout=10"
+    return url
+
+
+DATABASE_URL = normalize_database_url(
+    os.environ.get("DATABASE_URL")
+    or os.environ.get("DATABASE_PRIVATE_URL")
+    or os.environ.get("POSTGRES_URL")
+    or "sqlite:///./careersetu.db"
+)
+
+
 def create_engine_for_url(database_url: str):
     """Create an engine for a specific database URL"""
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    database_url = normalize_database_url(database_url)
     if "sqlite" in database_url:
         return create_engine(
             database_url,
-            connect_args={"check_same_thread": False}
+            connect_args={"check_same_thread": False},
         )
-    elif "postgresql" in database_url or "postgres" in database_url:
-        return create_engine(
-            database_url,
-            pool_pre_ping=True,  # Verify connections before using
-            pool_recycle=300,    # Recycle connections after 5 minutes
-        )
-    else:
-        return create_engine(database_url)
+    return create_engine(
+        database_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
+    )
 
-# Create default engine (for normal app usage)
+
 engine = create_engine_for_url(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

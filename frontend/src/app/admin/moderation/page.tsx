@@ -41,7 +41,9 @@ export default function AdminModerationPage() {
       setLoading(true);
       setError(null);
       try {
-        const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+        const apiBase = typeof window === "undefined"
+          ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "")
+          : "/backend";
         const token = localStorage.getItem("careerSetuToken") || localStorage.getItem("token") || "";
         const response = await fetch(`${apiBase}/admin/moderation/pending-edits`, {
           headers: {
@@ -71,7 +73,9 @@ export default function AdminModerationPage() {
   const processEdit = async (editId: number, action: "approve" | "reject") => {
     setProcessing(editId);
     try {
-      const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+      const apiBase = typeof window === "undefined"
+        ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "")
+        : "/backend";
       const token = localStorage.getItem("careerSetuToken") || localStorage.getItem("token") || "";
       const response = await fetch(`${apiBase}/admin/moderation/process-edit`, {
         method: "POST",
