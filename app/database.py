@@ -1,34 +1,41 @@
 import os
+import logging
 from typing import Generator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
-DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_PRIVATE_URL") or "sqlite:///./careersetu.db"
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+logger = logging.getLogger("careersetu.database")
 
-# Configure engine based on database type
-def create_engine_for_url(database_url: str):
-    """Create an engine for a specific database URL"""
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    if "sqlite" in database_url:
-        return create_engine(
-            database_url,
-            connect_args={"check_same_thread": False}
-        )
-    elif "postgresql" in database_url or "postgres" in database_url:
-        return create_engine(
-            database_url,
-            pool_pre_ping=True,  # Verify connections before using
-            pool_recycle=300,    # Recycle connections after 5 minutes
-        )
-    else:
-        return create_engine(database_url)
+def create_resilient_engine():
+    """Create database engine with automatic fallback to bundled SQLite database."""
+    target_url = os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_PRIVATE_URL") or "sqlite:///./careersetu.db"
+    if target_url.startswith("postgres://"):
+        target_url = target_url.replace("postgres://", "postgresql://", 1)
 
-# Create default engine (for normal app usage)
-engine = create_engine_for_url(DATABASE_URL)
+    if "postgresql" in target_url or "postgres" in target_url:
+        try:
+            logger.info(f"Attempting to connect to PostgreSQL database: {target_url[:20]}...")
+            pg_engine = create_engine(
+                target_url,
+                pool_pre_ping=True,
+                pool_recycle=300,
+                connect_args={"connect_timeout": 10},
+            )
+            with pg_engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info("Successfully connected to PostgreSQL database.")
+            return pg_engine
+        except Exception as e:
+            logger.error(f"PostgreSQL connection failed ({e}). Falling back to bundled SQLite database.")
+            target_url = "sqlite:///./careersetu.db"
 
+    logger.info("Using SQLite database.")
+    return create_engine(
+        target_url,
+        connect_args={"check_same_thread": False},
+    )
+
+engine = create_resilient_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

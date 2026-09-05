@@ -7,5 +7,8 @@
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"
+  },
+  "variables": {
+    "NEXT_PUBLIC_API_URL": "https://careersetu.up.railway.app"
   }
 }

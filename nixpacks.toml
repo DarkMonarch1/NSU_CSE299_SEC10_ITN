@@ -1,11 +1,12 @@
-[phases.setup]
-nixPkgs = ["python312", "gcc"]
-
 [phases.build]
+nixPkgs = ["python312"]
+
+[phases.install]
 cmds = ["pip install -r requirements.txt"]
 
-[start]
+[phases.start]
 cmd = "python scripts/migrate_and_start.py"
 
 [variables]
 PORT = "8000"
+PYTHONUNBUFFERED = "1"

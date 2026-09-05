@@ -16,12 +16,19 @@ def _find_data_dir() -> Path:
         (Path(__file__).resolve().parents[1] / "Data").resolve(),
         Path.cwd() / "Data",
         Path("/app/Data"),
+        Path("/app").resolve() / "Data",
+        Path("/workspace/Data"),
+        Path("/railway/Data"),
+        Path("/opt/render/project/src/Data"),
     ]
     for candidate in candidates:
         if candidate.exists() and (candidate / "19th-convocation1.csv").exists():
+            logger.info(f"Found Data directory at: {candidate}")
             return candidate
     # Fallback to standard relative path
-    return (Path(__file__).resolve().parents[1] / ".." / "Data").resolve()
+    fallback = (Path(__file__).resolve().parents[1] / ".." / "Data").resolve()
+    logger.warning(f"Data directory not found, using fallback: {fallback}")
+    return fallback
 
 
 DATA_DIR = _find_data_dir()

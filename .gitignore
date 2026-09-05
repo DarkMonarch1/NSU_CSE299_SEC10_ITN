@@ -27,3 +27,6 @@ frontend/out/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Data directory - UNCOMMENT THIS LINE IF YOU WANT TO EXCLUDE DATA FROM GIT
+# Data/

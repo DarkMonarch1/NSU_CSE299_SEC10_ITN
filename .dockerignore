@@ -6,3 +6,5 @@ __pycache__
 *.db
 frontend/node_modules
 frontend/.next
+# Data directory - UNCOMMENT THIS LINE IF YOU WANT TO EXCLUDE DATA FROM DOCKER
+# Data
