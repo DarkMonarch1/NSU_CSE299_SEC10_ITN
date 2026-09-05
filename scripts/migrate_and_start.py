@@ -1,9 +1,6 @@
 """
-Railway startup script that handles database migration and application startup
-This script will:
-1. Check if data needs to be migrated (if PostgreSQL is empty)
-2. Run database seeding with admin and employer accounts
-3. Start the FastAPI application
+Railway startup script that starts the FastAPI application
+Database initialization is handled by FastAPI lifespan to avoid blocking startup
 """
 import os
 import sys
@@ -18,46 +15,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("railway-startup")
 
 
-def check_and_migrate():
-    """Check if PostgreSQL database is empty and migrate data if needed"""
-    try:
-        # Import app modules after path is set
-        from app.database import engine, SessionLocal, Base
-        from app.models import UserModel
-        from app.services.db_seed import seed_database
-        
-        # Create tables
-        logger.info("Creating database tables...")
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created successfully")
-        
-        # Check database and seed any empty tables
-        db = SessionLocal()
-        try:
-            from app.models import AlumnusModel
-            user_count = db.query(UserModel).count()
-            alumni_count = db.query(AlumnusModel).count()
-            logger.info(f"Current DB state: {user_count} users, {alumni_count} alumni records")
-
-            # Always run seed_database: it independently checks each table and only seeds empty ones
-            logger.info("Running idempotent database seeding (convocation alumni, companies, jobs, users)...")
-            seed_database(db)
-            
-            alumni_after = db.query(AlumnusModel).count()
-            logger.info(f"Database seeding completed. Verified alumni count: {alumni_after}")
-            if user_count == 0:
-                logger.info("Admin account: admin@test.com / password123")
-                logger.info("Employer account: employer@test.com / password123")
-        finally:
-            db.close()
-            
-    except Exception as e:
-        logger.error(f"Error during database setup: {e}")
-        # Don't fail startup if migration fails, let the app start anyway
-        import traceback
-        traceback.print_exc()
-
-
 def start_application():
     """Start the FastAPI application"""
     logger.info("Starting FastAPI application...")
@@ -69,12 +26,15 @@ def start_application():
     port = int(os.environ.get("PORT", 8000))
     
     logger.info(f"Starting on 0.0.0.0:{port} with proxy_headers enabled")
+    
+    # Run uvicorn with proper configuration
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=port,
         proxy_headers=True,
         forwarded_allow_ips="*",
+        log_level="info",
     )
 
 
@@ -88,6 +48,12 @@ if __name__ == "__main__":
     else:
         logger.info(f"Database target: {db_url}")
 
-    # Listen first. Seeding runs in FastAPI lifespan so /health is not blocked.
-    # A blocking seed here is what caused Railway 502 "Application failed to respond".
-    start_application()
+    # Start the application immediately - database seeding runs in FastAPI lifespan
+    # This ensures the /health endpoint is available immediately for Railway healthchecks
+    try:
+        start_application()
+    except Exception as e:
+        logger.error(f"Failed to start application: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

@@ -2,6 +2,7 @@ import os
 import logging
 import threading
 from contextlib import asynccontextmanager
+from sqlalchemy import text
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -24,14 +25,20 @@ def _init_database() -> None:
     logger.info("Initializing CareerSetu Database tables...")
     try:
         Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully.")
+        
         db = SessionLocal()
         try:
             seed_database(db)
             logger.info("Database initialization finished.")
+        except Exception as seed_error:
+            logger.error(f"Error during database seeding: {seed_error}")
+            # Don't fail the app if seeding fails - tables are created
         finally:
             db.close()
     except Exception as e:
-        logger.error(f"Error during DB seeding: {e}")
+        logger.error(f"Error during DB table creation: {e}")
+        # Don't fail startup if table creation fails
 
 
 @asynccontextmanager
@@ -67,13 +74,25 @@ app.add_middleware(
 
 
 class HealthResponse(BaseModel):
-    status: str
+    status: str  # "ok", "starting", "error"
     message: str
 
 
 @app.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
-    return HealthResponse(status="ok", message="CareerSetu API and Database services running")
+    """Health check endpoint that always returns OK even if DB is still initializing"""
+    try:
+        # Try a simple DB connection check
+        db = SessionLocal()
+        try:
+            db.execute(text("SELECT 1"))
+        finally:
+            db.close()
+        return HealthResponse(status="ok", message="CareerSetu API and Database services running")
+    except Exception as e:
+        # Return OK even if DB is not ready yet - API is still starting up
+        logger.warning(f"Health check called but DB not ready: {e}")
+        return HealthResponse(status="starting", message="CareerSetu API starting - database initializing")
 
 
 @app.get("/", response_model=HealthResponse)

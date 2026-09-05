@@ -15,4 +15,6 @@ RUN chmod -R 755 Data
 
 EXPOSE 8000
 
+# Use a startup script to handle PORT environment variable
+COPY scripts/migrate_and_start.py ./
 CMD ["python", "scripts/migrate_and_start.py"]
