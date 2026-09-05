@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database import get_db, Base, engine
 from app.models import UserModel
 from app.schemas import UserCreate, UserLogin, UserResponse, TokenResponse
 from app.auth_utils import (
@@ -13,8 +13,19 @@ from app.auth_utils import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def ensure_db_tables():
+    """Ensure database tables exist before operations"""
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to create database tables: {e}")
+
+
 @router.post("/signup", response_model=TokenResponse)
 def signup(payload: UserCreate, db: Session = Depends(get_db)) -> TokenResponse:
+    ensure_db_tables()
+    
     existing = db.query(UserModel).filter(UserModel.email == payload.email).first()
     if existing:
         raise HTTPException(
@@ -44,6 +55,8 @@ def signup(payload: UserCreate, db: Session = Depends(get_db)) -> TokenResponse:
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: UserLogin, db: Session = Depends(get_db)) -> TokenResponse:
+    ensure_db_tables()
+    
     user = db.query(UserModel).filter(UserModel.email == payload.email).first()
     if not user:
         raise HTTPException(

@@ -75,6 +75,13 @@ def get_current_user(
     Raises 401 if no valid token is present.
     """
     from app.models import UserModel  # deferred to avoid circular imports
+    from app.database import Base, engine
+
+    # Ensure tables exist
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass  # Don't fail auth if table creation fails
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -93,7 +100,11 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = db.query(UserModel).filter(UserModel.email == user_email).first()
+    try:
+        user = db.query(UserModel).filter(UserModel.email == user_email).first()
+    except Exception:
+        raise credentials_exception
+        
     if user is None:
         raise credentials_exception
 

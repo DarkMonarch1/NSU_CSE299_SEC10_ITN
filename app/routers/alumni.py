@@ -101,13 +101,18 @@ def get_all_alumni(
     skip: int = Query(0, ge=0, description="Records to skip (offset)."),
     db: Session = Depends(get_db),
 ) -> List[dict]:
-    # Check if DB has alumni records; if not, trigger seeding on-demand
+    # Initialize database tables on first request if needed
     try:
+        from app.database import Base, engine
+        from app.services.db_seed import seed_database
+        
+        Base.metadata.create_all(bind=engine)
+        
+        # Check if DB has alumni records; if not, trigger seeding on-demand
         count = db.query(AlumnusModel).count()
         if count == 0:
             logger.info("Alumni table is empty on request; running on-demand database seeding...")
             try:
-                from app.services.db_seed import seed_database
                 seed_database(db)
                 logger.info("On-demand seeding completed successfully")
             except Exception as e:
@@ -116,7 +121,7 @@ def get_all_alumni(
                 logger.info("Falling back to CSV data")
                 return _get_csv_alumni_fallback(batch, department, search, limit, skip)
     except Exception as db_error:
-        logger.error(f"Database query failed: {db_error}")
+        logger.error(f"Database initialization failed: {db_error}")
         # Fall back to CSV data if database is unavailable
         logger.info("Falling back to CSV data due to database error")
         return _get_csv_alumni_fallback(batch, department, search, limit, skip)
