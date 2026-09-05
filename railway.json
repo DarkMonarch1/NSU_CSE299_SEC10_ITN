@@ -7,9 +7,11 @@
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
-    "numReplicas": 1
+    "numReplicas": 1,
+    "healthcheckInterval": 60
   },
   "variables": {
-    "CORS_ORIGINS": "https://careersetu-frontend.up.railway.app,https://careersetu.up.railway.app"
+    "CORS_ORIGINS": "https://careersetu-frontend.up.railway.app,https://careersetu.up.railway.app",
+    "PYTHONUNBUFFERED": "1"
   }
 }

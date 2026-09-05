@@ -1,7 +1,7 @@
 """
 Railway startup script that handles database migration and application startup
 This script will:
-1. Start the FastAPI application (database seeding happens in FastAPI lifespan)
+1. Start the FastAPI application immediately (database seeding happens in FastAPI lifespan)
 """
 import os
 import sys
@@ -33,6 +33,7 @@ def start_application():
         port=port,
         proxy_headers=True,
         forwarded_allow_ips="*",
+        log_level="info",
     )
 
 
@@ -48,7 +49,6 @@ if __name__ == "__main__":
     else:
         logger.info(f"Database target: {db_url}")
 
-    # Start the application immediately (database seeding runs in FastAPI lifespan to avoid blocking Railway healthchecks)
-    # Listen first. Seeding runs in FastAPI lifespan so /health is not blocked.
-    # A blocking seed here is what caused Railway 502 "Application failed to respond".
+    # Start the application immediately - no blocking operations
+    # Database seeding runs in FastAPI lifespan to avoid blocking Railway healthchecks
     start_application()

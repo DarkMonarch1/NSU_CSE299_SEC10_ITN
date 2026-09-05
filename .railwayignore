@@ -7,5 +7,4 @@ __pycache__
 *.db
 frontend/node_modules
 frontend/.next
-# Do NOT exclude Data directory - we need the CSV files
-# Data/
+# Data directory MUST be included for alumni CSV files

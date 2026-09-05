@@ -55,28 +55,27 @@ def create_engine_for_url(database_url: str):
         pool_recycle=300,
         pool_size=5,
         max_overflow=10,
+        connect_args={"connect_timeout": 10},
     )
 
 
-try:
-    engine = create_engine_for_url(DATABASE_URL)
-    # Test connection
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-    logger.info("Database connection successful")
-except Exception as e:
-    logger.error(f"Database connection failed: {e}")
-    # Fallback to SQLite if PostgreSQL fails
-    logger.info("Falling back to SQLite database")
-    DATABASE_URL = "sqlite:///./careersetu.db"
-    engine = create_engine_for_url(DATABASE_URL)
-
+# Don't test connection at module import time - it can timeout on Railway
+# Test connection during application startup instead
+engine = create_engine_for_url(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
 def init_db() -> None:
     """Create all tables.  Called once during application startup."""
+    try:
+        # Test connection during initialization
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        logger.info("Database connection successful")
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        raise
     Base.metadata.create_all(bind=engine)
 
 

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.database import engine, Base, SessionLocal
+from app.database import engine, Base, SessionLocal, init_db
 from app.services.db_seed import seed_database
 from app.routers.alumni import router as alumni_router
 from app.routers.companies import router as companies_router
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     # Initialize DB Tables and run CSV seeding on startup safely
     logger.info("Initializing CareerSetu Database tables...")
     try:
-        Base.metadata.create_all(bind=engine)
+        init_db()
         db = SessionLocal()
         try:
             seed_database(db)
@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI):
             db.close()
     except Exception as e:
         logger.error(f"Error during DB initialization: {e}")
+        # Don't fail startup - let the app start even if DB init fails
     yield
 
 
