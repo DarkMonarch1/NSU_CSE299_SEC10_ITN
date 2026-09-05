@@ -13,7 +13,9 @@ import {
   MOCK_MAGAZINE,
 } from "@/data/mockData";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+const DIRECT_API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+// Browser calls go same-origin through Next.js rewrites to avoid CORS "Failed to fetch".
+const API_BASE = typeof window === "undefined" ? DIRECT_API : "/backend";
 
 // ---------------------------------------------------------------------------
 // Token helpers
@@ -69,19 +71,32 @@ async function fetchWithFallback<T>(
 // ---------------------------------------------------------------------------
 // Auth (no fallback — errors must propagate) — AUD-03, AUD-04
 // ---------------------------------------------------------------------------
+function networkErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof TypeError) {
+    return "Cannot reach the CareerSetu API. The backend may still be starting or DATABASE_URL is not linked.";
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export async function apiLogin(
   email: string,
   password: string,
 ): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch (error) {
+    throw new Error(networkErrorMessage(error, "Login failed."));
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: "Login failed." }));
-    throw new Error(body.detail || "Invalid email or password.");
+    throw new Error(body.detail || body.message || "Invalid email or password.");
   }
   return (await res.json()) as AuthResponse;
 }
@@ -93,15 +108,20 @@ export async function apiSignup(data: {
   role?: string;
   nsuId?: string;
 }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error) {
+    throw new Error(networkErrorMessage(error, "Signup failed."));
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: "Signup failed." }));
-    throw new Error(body.detail || "Signup failed.");
+    throw new Error(body.detail || body.message || "Signup failed.");
   }
   return (await res.json()) as AuthResponse;
 }

@@ -6,36 +6,57 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
 logger = logging.getLogger("careersetu.database")
 
-def create_resilient_engine():
-    """Create database engine with automatic fallback to bundled SQLite database."""
-    target_url = os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_PRIVATE_URL") or "sqlite:///./careersetu.db"
-    if target_url.startswith("postgres://"):
-        target_url = target_url.replace("postgres://", "postgresql://", 1)
 
-    if "postgresql" in target_url or "postgres" in target_url:
-        try:
-            logger.info(f"Attempting to connect to PostgreSQL database: {target_url[:20]}...")
-            pg_engine = create_engine(
-                target_url,
-                pool_pre_ping=True,
-                pool_recycle=300,
-                connect_args={"connect_timeout": 10},
-            )
-            with pg_engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
-            logger.info("Successfully connected to PostgreSQL database.")
-            return pg_engine
-        except Exception as e:
-            logger.error(f"PostgreSQL connection failed ({e}). Falling back to bundled SQLite database.")
-            target_url = "sqlite:///./careersetu.db"
+def normalize_database_url(raw_url: str) -> str:
+    """Make Railway/Heroku Postgres URLs usable by SQLAlchemy + psycopg2."""
+    url = raw_url.strip()
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
+    if url.startswith("postgresql://") and "+psycopg2" not in url and "+psycopg" not in url:
+        url = "postgresql+psycopg2://" + url[len("postgresql://") :]
 
-    logger.info("Using SQLite database.")
+    if "sqlite" in url:
+        return url
+
+    if "sslmode=" not in url:
+        separator = "&" if "?" in url else "?"
+        if "railway.internal" in url or "postgres.railway.internal" in url:
+            url = f"{url}{separator}sslmode=disable"
+        elif "rlwy.net" in url or "railway.app" in url:
+            url = f"{url}{separator}sslmode=require"
+
+    if "connect_timeout=" not in url:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}connect_timeout=10"
+    return url
+
+
+DATABASE_URL = normalize_database_url(
+    os.environ.get("DATABASE_URL")
+    or os.environ.get("DATABASE_PRIVATE_URL")
+    or os.environ.get("POSTGRES_URL")
+    or "sqlite:///./careersetu.db"
+)
+
+
+def create_engine_for_url(database_url: str):
+    """Create an engine for a specific database URL"""
+    database_url = normalize_database_url(database_url)
+    if "sqlite" in database_url:
+        return create_engine(
+            database_url,
+            connect_args={"check_same_thread": False},
+        )
     return create_engine(
-        target_url,
-        connect_args={"check_same_thread": False},
+        database_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
     )
 
-engine = create_resilient_engine()
+
+engine = create_engine_for_url(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
