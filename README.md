@@ -15,6 +15,11 @@ curl http://127.0.0.1:8000/health
 
 ### Docker
 ```bash
-docker build -t careersetu:latest .
-docker run -p 8000:8000 careersetu:latest
+cp .env.example .env
+docker compose up --build
 ```
+
+The complete Compose stack exposes the Next.js frontend at `http://127.0.0.1:3000`,
+the API at `http://127.0.0.1:8000`, and the ML service at `http://127.0.0.1:8001`.
+Set `NEXT_PUBLIC_API_URL` to the public API URL before building the frontend image.
+
