@@ -7,5 +7,21 @@
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"
+  },
+  "services": {
+    "web": {
+      "build": {
+        "builder": "NIXPACKS"
+      },
+      "deploy": {
+        "healthcheckPath": "/health",
+        "healthcheckTimeout": 300,
+        "restartPolicyType": "ON_FAILURE"
+      }
+    },
+    "database": {
+      "type": "postgres",
+      "plan": "free"
+    }
   }
 }

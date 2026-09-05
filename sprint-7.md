@@ -182,3 +182,8 @@ Enhance the CareerSetu platform with automated job scraping, authentic researche
 - Admin moderation requires users to submit profile edit requests through a separate UI (to be implemented)
 - Free deployment guide provides multiple options based on user preferences and technical comfort level
 - All salary data and statistics are based on 2026 market research from reputable sources
+
+# To fix the faced issues the changes made are:
+Updated database.py - Added PostgreSQL support with connection pooling
+Updated railway.json - Added PostgreSQL database service configuration
+Updated .env.example - Clarified database URL configuration
