@@ -5,7 +5,7 @@ nixPkgs = ["python312"]
 cmds = ["pip install -r requirements.txt"]
 
 [phases.start]
-cmd = "python scripts/migrate_and_start.py"
+cmd = "uvicorn app.main_test:app --host 0.0.0.0 --port $PORT"
 
 [variables]
 PORT = "8000"
