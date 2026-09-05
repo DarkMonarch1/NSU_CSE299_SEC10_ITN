@@ -9,13 +9,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app ./app
 COPY scripts ./scripts
-COPY simple_server.py ./
 
 # Copy data directory
 COPY Data ./Data
 RUN chmod -R 755 Data
 
-EXPOSE 8000
+EXPOSE 8080
 
-# Use simple server to test infrastructure
-CMD ["python", "simple_server.py"]
+# Start the main application
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

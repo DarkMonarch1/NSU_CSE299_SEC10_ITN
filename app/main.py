@@ -14,7 +14,6 @@ app = FastAPI(
     description="Backend microservice platform for NSU AI-Powered Alumni-Industry Bridge",
 )
 
-
 # CORS configuration
 _raw_origins = os.environ.get(
     "CORS_ORIGINS",
@@ -30,7 +29,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # Import routers AFTER app creation to avoid blocking
 try:
@@ -66,67 +64,3 @@ def health_check() -> HealthResponse:
 @app.get("/", response_model=HealthResponse)
 def read_root() -> HealthResponse:
     return HealthResponse(status="ok", message="Welcome to CareerSetu Platform Backend")
-
-# CORS — restrict to frontend origin (AUD-10)
-_raw_origins = os.environ.get(
-    "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,https://careersetu-frontend.up.railway.app,https://careersetu.up.railway.app",
-).split(",")
-ALLOWED_ORIGINS = [o.strip() for o in _raw_origins if o.strip()]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.railway\.app|https://.*\.up\.railway\.app|http://localhost:*",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-class HealthResponse(BaseModel):
-    status: str  # "ok", "starting", "error"
-    message: str
-
-
-@app.get("/health", response_model=HealthResponse)
-def health_check() -> HealthResponse:
-    """Health check endpoint that returns immediately without DB checks"""
-    return HealthResponse(status="ok", message="CareerSetu API running")
-
-
-@app.post("/init-db")
-def init_database():
-    """Manual database initialization endpoint"""
-    try:
-        from app.services.db_seed import seed_database
-        
-        logger.info("Creating database tables...")
-        Base.metadata.create_all(bind=engine)
-        
-        db = SessionLocal()
-        try:
-            seed_database(db)
-            logger.info("Database initialization completed successfully")
-            return {"status": "success", "message": "Database initialized"}
-        except Exception as e:
-            logger.error(f"Database seeding failed: {e}")
-            return {"status": "partial", "message": f"Tables created, seeding failed: {str(e)}"}
-        finally:
-            db.close()
-    except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@app.get("/", response_model=HealthResponse)
-def read_root() -> HealthResponse:
-    return HealthResponse(status="ok", message="Welcome to CareerSetu Platform Backend")
-
-
-app.include_router(auth_router)
-app.include_router(alumni_router)
-app.include_router(companies_router)
-app.include_router(jobs_router)
-app.include_router(ml_router)
-app.include_router(admin_router)

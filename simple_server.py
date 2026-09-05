@@ -16,7 +16,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         super().end_headers()
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8000))
+    port = int(os.environ.get('PORT', 8080))
     server = HTTPServer(('0.0.0.0', port), SimpleHandler)
     print(f"Starting simple server on port {port}")
     server.serve_forever()
