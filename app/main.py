@@ -1,11 +1,12 @@
 import os
 import logging
+import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.database import engine, Base, SessionLocal, init_db
+from app.database import engine, Base, SessionLocal
 from app.services.db_seed import seed_database
 from app.routers.alumni import router as alumni_router
 from app.routers.companies import router as companies_router
@@ -18,23 +19,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("careersetu")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Initialize DB Tables and run CSV seeding on startup safely
+def _init_database() -> None:
+    """Create tables and seed data without blocking the HTTP port."""
     logger.info("Initializing CareerSetu Database tables...")
     try:
-        init_db()
+        Base.metadata.create_all(bind=engine)
         db = SessionLocal()
         try:
             seed_database(db)
             logger.info("Database initialization finished.")
-        except Exception as e:
-            logger.error(f"Error during DB seeding: {e}")
         finally:
             db.close()
     except Exception as e:
-        logger.error(f"Error during DB initialization: {e}")
-        # Don't fail startup - let the app start even if DB init fails
+        logger.error(f"Error during DB seeding: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Seed in a background thread so Railway healthchecks can bind immediately.
+    thread = threading.Thread(target=_init_database, daemon=True, name="db-init")
+    thread.start()
     yield
 
 
@@ -48,13 +52,14 @@ app = FastAPI(
 # CORS — restrict to frontend origin (AUD-10)
 _raw_origins = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,https://careersetu-frontend.up.railway.app,https://careersetu.up.railway.app",
+    "http://localhost:3000,http://127.0.0.1:3000,https://careersetu-frontend.up.railway.app",
 ).split(",")
 ALLOWED_ORIGINS = [o.strip() for o in _raw_origins if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for Railway deployment
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.railway\.app|https://.*\.up\.railway\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

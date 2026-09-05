@@ -13,7 +13,9 @@ import {
   MOCK_MAGAZINE,
 } from "@/data/mockData";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+const DIRECT_API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+// Browser calls go same-origin through Next.js rewrites to avoid CORS "Failed to fetch".
+const API_BASE = typeof window === "undefined" ? DIRECT_API : "/backend";
 
 // ---------------------------------------------------------------------------
 // Token helpers
