@@ -155,13 +155,12 @@ def seed_database(db: Session) -> None:
         db.commit()
         logger.info("Successfully seeded default system users.")
 
-    # 5. Integrate Job Scraper for live job data (disabled by default to avoid conflicts)
-    # Uncomment the following lines to enable automatic job scraping on startup
-    # if db.query(JobPostingModel).count() == 0:
-    #     logger.info("Integrating job scraper for live job data...")
-    #     try:
-    #         scraper = JobScraperService(db)
-    #         jobs_added = scraper.sync_jobs_to_database(force_refresh=True)
-    #         logger.info(f"Successfully integrated {jobs_added} scraped jobs from company data.")
-    #     except Exception as e:
-    #         logger.error(f"Error during job scraping integration: {e}")
+    # 5. Integrate Job Scraper for live job data
+    if db.query(JobPostingModel).count() == 0:
+        logger.info("Integrating job scraper for live job data...")
+        try:
+            scraper = JobScraperService(db)
+            jobs_added = scraper.sync_jobs_to_database(force_refresh=True)
+            logger.info(f"Successfully integrated {jobs_added} scraped jobs from company data.")
+        except Exception as e:
+            logger.error(f"Error during job scraping integration: {e}")
