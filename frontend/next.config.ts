@@ -8,12 +8,17 @@ const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").repl
 const nextConfig: NextConfig = {
   output: "standalone",
   async rewrites() {
-    return [
-      {
-        source: "/backend/:path*",
-        destination: `${apiUrl}/:path*`,
-      },
-    ];
+    // Only use rewrites in development for local testing
+    // In production, use direct API calls via NEXT_PUBLIC_API_URL
+    if (process.env.NODE_ENV === "development") {
+      return [
+        {
+          source: "/backend/:path*",
+          destination: `${apiUrl}/:path*`,
+        },
+      ];
+    }
+    return [];
   },
 };
 

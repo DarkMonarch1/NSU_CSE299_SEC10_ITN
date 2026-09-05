@@ -14,8 +14,8 @@ import {
 } from "@/data/mockData";
 
 const DIRECT_API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
-// Browser calls go same-origin through Next.js rewrites to avoid CORS "Failed to fetch".
-const API_BASE = typeof window === "undefined" ? DIRECT_API : "/backend";
+// Use direct API URL in both server and client to avoid rewrite issues in production
+const API_BASE = DIRECT_API;
 
 // ---------------------------------------------------------------------------
 // Token helpers

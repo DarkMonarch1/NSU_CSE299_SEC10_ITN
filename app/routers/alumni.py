@@ -102,59 +102,76 @@ def get_all_alumni(
     db: Session = Depends(get_db),
 ) -> List[dict]:
     # Check if DB has alumni records; if not, trigger seeding on-demand
-    if db.query(AlumnusModel).count() == 0:
-        logger.info("Alumni table is empty on request; running on-demand database seeding...")
-        try:
-            from app.services.db_seed import seed_database
-            seed_database(db)
-        except Exception as e:
-            logger.error(f"On-demand seeding failed: {e}")
-
-    query = db.query(AlumnusModel)
-    if batch and batch.lower() != "all":
-        query = query.filter(AlumnusModel.batch.ilike(f"%{_escape_like(batch)}%"))
-
-    if department and department.lower() != "all":
-        dept_term = department.strip()
-        if dept_term.lower() in ["computer science", "cse"]:
-            query = query.filter(
-                (AlumnusModel.department.ilike("%Computer%")) |
-                (AlumnusModel.department.ilike("%CSE%")) |
-                (AlumnusModel.degree.ilike("%Computer%"))
-            )
-        elif dept_term.lower() in ["electrical", "eee"]:
-            query = query.filter(
-                (AlumnusModel.department.ilike("%Electrical%")) |
-                (AlumnusModel.department.ilike("%EEE%")) |
-                (AlumnusModel.degree.ilike("%Electronic%")) |
-                (AlumnusModel.degree.ilike("%Telecommunication%"))
-            )
-        elif dept_term.lower() in ["architecture", "arch"]:
-            query = query.filter(
-                (AlumnusModel.department.ilike("%Architecture%")) |
-                (AlumnusModel.degree.ilike("%Arch%"))
-            )
-        else:
-            query = query.filter(AlumnusModel.department.ilike(f"%{_escape_like(dept_term)}%"))
-
-    if search:
-        search_lower = f"%{_escape_like(search.lower())}%"
-        query = query.filter(
-            AlumnusModel.full_name.ilike(search_lower) |
-            AlumnusModel.nsu_id.ilike(search_lower) |
-            AlumnusModel.current_company.ilike(search_lower) |
-            AlumnusModel.current_role.ilike(search_lower)
-        )
-
-    total = query.count()
-    if total == 0 and db.query(AlumnusModel).count() == 0:
-        # Fallback to direct CSV reader if DB table is completely empty
-        logger.info("Falling back to direct CSV loader for alumni query...")
+    try:
+        count = db.query(AlumnusModel).count()
+        if count == 0:
+            logger.info("Alumni table is empty on request; running on-demand database seeding...")
+            try:
+                from app.services.db_seed import seed_database
+                seed_database(db)
+                logger.info("On-demand seeding completed successfully")
+            except Exception as e:
+                logger.error(f"On-demand seeding failed: {e}")
+                # Fall back to CSV data if seeding fails
+                logger.info("Falling back to CSV data")
+                return _get_csv_alumni_fallback(batch, department, search, limit, skip)
+    except Exception as db_error:
+        logger.error(f"Database query failed: {db_error}")
+        # Fall back to CSV data if database is unavailable
+        logger.info("Falling back to CSV data due to database error")
         return _get_csv_alumni_fallback(batch, department, search, limit, skip)
 
-    alumni = query.order_by(AlumnusModel.full_name).offset(skip).limit(limit).all()
-    results = [_to_alumni_response(a) for a in alumni]
-    return results
+    try:
+        query = db.query(AlumnusModel)
+        if batch and batch.lower() != "all":
+            query = query.filter(AlumnusModel.batch.ilike(f"%{_escape_like(batch)}%"))
+
+        if department and department.lower() != "all":
+            dept_term = department.strip()
+            if dept_term.lower() in ["computer science", "cse"]:
+                query = query.filter(
+                    (AlumnusModel.department.ilike("%Computer%")) |
+                    (AlumnusModel.department.ilike("%CSE%")) |
+                    (AlumnusModel.degree.ilike("%Computer%"))
+                )
+            elif dept_term.lower() in ["electrical", "eee"]:
+                query = query.filter(
+                    (AlumnusModel.department.ilike("%Electrical%")) |
+                    (AlumnusModel.department.ilike("%EEE%")) |
+                    (AlumnusModel.degree.ilike("%Electronic%")) |
+                    (AlumnusModel.degree.ilike("%Telecommunication%"))
+                )
+            elif dept_term.lower() in ["architecture", "arch"]:
+                query = query.filter(
+                    (AlumnusModel.department.ilike("%Architecture%")) |
+                    (AlumnusModel.degree.ilike("%Arch%"))
+                )
+            else:
+                query = query.filter(AlumnusModel.department.ilike(f"%{_escape_like(dept_term)}%"))
+
+        if search:
+            search_lower = f"%{_escape_like(search.lower())}%"
+            query = query.filter(
+                AlumnusModel.full_name.ilike(search_lower) |
+                AlumnusModel.nsu_id.ilike(search_lower) |
+                AlumnusModel.current_company.ilike(search_lower) |
+                AlumnusModel.current_role.ilike(search_lower)
+            )
+
+        total = query.count()
+        if total == 0 and db.query(AlumnusModel).count() == 0:
+            # Fallback to direct CSV reader if DB table is completely empty
+            logger.info("Falling back to direct CSV loader for alumni query...")
+            return _get_csv_alumni_fallback(batch, department, search, limit, skip)
+
+        alumni = query.order_by(AlumnusModel.full_name).offset(skip).limit(limit).all()
+        results = [_to_alumni_response(a) for a in alumni]
+        return results
+    except Exception as query_error:
+        logger.error(f"Database query execution failed: {query_error}")
+        # Fall back to CSV data if query fails
+        logger.info("Falling back to CSV data due to query error")
+        return _get_csv_alumni_fallback(batch, department, search, limit, skip)
 
 
 @router.get("/19th", response_model=List[dict])
