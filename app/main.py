@@ -1,6 +1,5 @@
 import os
 import logging
-import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,8 +18,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("careersetu")
 
 
-def _init_database() -> None:
-    """Create tables and seed data without blocking the HTTP port."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize DB Tables and run CSV seeding on startup safely
     logger.info("Initializing CareerSetu Database tables...")
     try:
         Base.metadata.create_all(bind=engine)
@@ -28,17 +28,12 @@ def _init_database() -> None:
         try:
             seed_database(db)
             logger.info("Database initialization finished.")
+        except Exception as e:
+            logger.error(f"Error during DB seeding: {e}")
         finally:
             db.close()
     except Exception as e:
-        logger.error(f"Error during DB seeding: {e}")
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Seed in a background thread so Railway healthchecks can bind immediately.
-    thread = threading.Thread(target=_init_database, daemon=True, name="db-init")
-    thread.start()
+        logger.error(f"Error during DB initialization: {e}")
     yield
 
 

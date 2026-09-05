@@ -38,6 +38,8 @@ DATABASE_URL = normalize_database_url(
     or "sqlite:///./careersetu.db"
 )
 
+logger.info(f"Using database URL: {DATABASE_URL[:30]}...")
+
 
 def create_engine_for_url(database_url: str):
     """Create an engine for a specific database URL"""
@@ -56,7 +58,19 @@ def create_engine_for_url(database_url: str):
     )
 
 
-engine = create_engine_for_url(DATABASE_URL)
+try:
+    engine = create_engine_for_url(DATABASE_URL)
+    # Test connection
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
+    logger.info("Database connection successful")
+except Exception as e:
+    logger.error(f"Database connection failed: {e}")
+    # Fallback to SQLite if PostgreSQL fails
+    logger.info("Falling back to SQLite database")
+    DATABASE_URL = "sqlite:///./careersetu.db"
+    engine = create_engine_for_url(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
