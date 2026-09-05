@@ -39,9 +39,17 @@ def seed_database(db: Session) -> None:
                 )
                 alumni_objects.append(alumnus)
         if alumni_objects:
-            db.bulk_save_objects(alumni_objects)
-            db.commit()
-            logger.info(f"Successfully seeded {len(alumni_objects)} alumni records.")
+            batch_size = 1000
+            total_saved = 0
+            for i in range(0, len(alumni_objects), batch_size):
+                chunk = alumni_objects[i : i + batch_size]
+                db.bulk_save_objects(chunk)
+                db.commit()
+                total_saved += len(chunk)
+                logger.info(f"Seeded alumni batch: {total_saved}/{len(alumni_objects)}")
+            logger.info(f"Successfully seeded {total_saved} alumni records into Database.")
+        else:
+            logger.warning("No alumni records found from convocation CSV files to seed.")
 
     # 2. Seed Companies Dataset
     if db.query(CompanyModel).count() == 0:

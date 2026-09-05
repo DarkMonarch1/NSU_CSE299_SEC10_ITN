@@ -83,7 +83,7 @@ export default function AlumniPage() {
     loadAlumniData();
   }, [loadAlumniData]);
 
-  const displayList = alumniList.length > 0 ? alumniList : MOCK_ALUMNI;
+  const displayList = alumniList;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-12">

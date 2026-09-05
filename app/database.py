@@ -4,10 +4,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./careersetu.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # Configure engine based on database type
 def create_engine_for_url(database_url: str):
     """Create an engine for a specific database URL"""
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
     if "sqlite" in database_url:
         return create_engine(
             database_url,

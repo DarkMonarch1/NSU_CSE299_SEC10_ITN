@@ -32,20 +32,23 @@ def check_and_migrate():
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
         
-        # Check if database is empty by checking for users
+        # Check database and seed any empty tables
         db = SessionLocal()
         try:
+            from app.models import AlumnusModel
             user_count = db.query(UserModel).count()
+            alumni_count = db.query(AlumnusModel).count()
+            logger.info(f"Current DB state: {user_count} users, {alumni_count} alumni records")
+
+            # Always run seed_database: it independently checks each table and only seeds empty ones
+            logger.info("Running idempotent database seeding (convocation alumni, companies, jobs, users)...")
+            seed_database(db)
             
+            alumni_after = db.query(AlumnusModel).count()
+            logger.info(f"Database seeding completed. Verified alumni count: {alumni_after}")
             if user_count == 0:
-                logger.info("Database is empty, running seeding...")
-                seed_database(db)
-                logger.info("Database seeding completed successfully")
                 logger.info("Admin account: admin@test.com / password123")
                 logger.info("Employer account: employer@test.com / password123")
-            else:
-                logger.info(f"Database already has {user_count} users, skipping seeding")
-                
         finally:
             db.close()
             
@@ -66,8 +69,14 @@ def start_application():
     # Get the port from environment variable or default to 8000
     port = int(os.environ.get("PORT", 8000))
     
-    logger.info(f"Starting on port {port}")
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
+    logger.info(f"Starting on port {port} with proxy_headers enabled")
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=port,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+    )
 
 
 if __name__ == "__main__":

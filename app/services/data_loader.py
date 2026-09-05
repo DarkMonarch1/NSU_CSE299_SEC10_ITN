@@ -3,8 +3,28 @@ import re
 from pathlib import Path
 from typing import Any
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = (BASE_DIR / ".." / "Data").resolve()
+import logging
+
+logger = logging.getLogger("careersetu.data_loader")
+
+
+def _find_data_dir() -> Path:
+    """Resolve the Data directory across local dev, Docker, Nixpacks, and Railway environments."""
+    candidates = [
+        (Path(__file__).resolve().parents[1] / ".." / "Data").resolve(),
+        (Path(__file__).resolve().parents[2] / "Data").resolve(),
+        (Path(__file__).resolve().parents[1] / "Data").resolve(),
+        Path.cwd() / "Data",
+        Path("/app/Data"),
+    ]
+    for candidate in candidates:
+        if candidate.exists() and (candidate / "19th-convocation1.csv").exists():
+            return candidate
+    # Fallback to standard relative path
+    return (Path(__file__).resolve().parents[1] / ".." / "Data").resolve()
+
+
+DATA_DIR = _find_data_dir()
 
 
 def read_csv_rows(path: Path) -> list[list[str]]:
@@ -110,6 +130,7 @@ def load_company_details() -> list[dict[str, str]]:
 def load_convocation_list(filename: str, batch_name: str) -> list[dict[str, Any]]:
     path = (DATA_DIR / filename).resolve()
     if not path.exists():
+        logger.warning(f"Convocation CSV not found: {path} (DATA_DIR: {DATA_DIR})")
         return []
 
     alumni: list[dict[str, Any]] = []
@@ -121,4 +142,5 @@ def load_convocation_list(filename: str, batch_name: str) -> list[dict[str, Any]
                 parsed["batch"] = batch_name
                 alumni.append(parsed)
 
+    logger.info(f"Loaded {len(alumni)} graduates from {filename} ({batch_name})")
     return alumni

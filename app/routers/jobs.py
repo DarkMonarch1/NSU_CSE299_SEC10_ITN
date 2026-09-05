@@ -44,6 +44,7 @@ def _to_job_response(model: JobPostingModel) -> JobResponse:
     )
 
 
+@router.get("", response_model=List[JobResponse])
 @router.get("/", response_model=List[JobResponse])
 def list_jobs(
     search: Optional[str] = Query(None, description="Search query for job title or company."),

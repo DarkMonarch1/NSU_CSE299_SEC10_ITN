@@ -41,14 +41,16 @@ app = FastAPI(
 )
 
 # CORS — restrict to frontend origin (AUD-10)
-ALLOWED_ORIGINS = os.environ.get(
+_raw_origins = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:3000",
+    "http://localhost:3000,http://127.0.0.1:3000",
 ).split(",")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.railway\.app|https://.*\.up\.railway\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
