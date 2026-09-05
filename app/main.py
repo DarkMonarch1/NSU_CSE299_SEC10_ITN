@@ -44,8 +44,10 @@ def _init_database() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Seed in a background thread so Railway healthchecks can bind immediately.
+    logger.info("Starting background database initialization...")
     thread = threading.Thread(target=_init_database, daemon=True, name="db-init")
     thread.start()
+    logger.info("FastAPI application startup complete, database running in background")
     yield
 
 
