@@ -9,7 +9,6 @@
     "restartPolicyType": "ON_FAILURE"
   },
   "variables": {
-    "NEXT_PUBLIC_API_URL": "https://careersetu.up.railway.app",
-    "NODE_ENV": "production"
+    "NEXT_PUBLIC_API_URL": "https://careersetu.up.railway.app"
   }
 }
