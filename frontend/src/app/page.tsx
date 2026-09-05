@@ -93,20 +93,20 @@ export default function Home() {
             {/* Quick Metrics Banner */}
             <div className="mt-12 grid grid-cols-2 gap-4 rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl sm:grid-cols-4">
               <div>
-                <p className="text-2xl font-bold text-white sm:text-3xl">1,240+</p>
-                <p className="text-xs text-slate-400 mt-1">19th & 20th Graduates</p>
+                <p className="text-2xl font-bold text-white sm:text-3xl">84.1%</p>
+                <p className="text-xs text-slate-400 mt-1">NSU Graduate Employment Rate</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-cyan-400 sm:text-3xl">850+</p>
-                <p className="text-xs text-slate-400 mt-1">21st Procession List</p>
+                <p className="text-2xl font-bold text-cyan-400 sm:text-3xl">BDT 50K-80K</p>
+                <p className="text-xs text-slate-400 mt-1">Avg NSU CSE Starting Salary</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">98.4%</p>
-                <p className="text-xs text-slate-400 mt-1">AI Trust Model Accuracy</p>
+                <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">40%</p>
+                <p className="text-xs text-slate-400 mt-1">Bangladesh ICT Annual Growth</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-indigo-400 sm:text-3xl">45+</p>
-                <p className="text-xs text-slate-400 mt-1">Partner Tech Firms</p>
+                <p className="text-2xl font-bold text-indigo-400 sm:text-3xl">$1.4B</p>
+                <p className="text-xs text-slate-400 mt-1">Annual IT Export Revenue</p>
               </div>
             </div>
           </div>

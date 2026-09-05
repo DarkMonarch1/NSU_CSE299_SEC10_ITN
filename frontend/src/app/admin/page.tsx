@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import TrustBadge from "@/components/TrustBadge";
@@ -16,6 +17,7 @@ import {
   Building2,
   Loader2,
   AlertCircle,
+  ChevronRight,
 } from "lucide-react";
 
 export default function AdminConsolePage() {
@@ -113,9 +115,18 @@ export default function AdminConsolePage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           {/* HEADER BANNER */}
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl mb-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-300 mb-2">
-              <Shield className="h-3.5 w-3.5 text-emerald-400" />
-              <span>CareerSetu Platform Moderation Console — Database Connected</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-300">
+                <Shield className="h-3.5 w-3.5 text-emerald-400" />
+                <span>CareerSetu Platform Moderation Console — Database Connected</span>
+              </div>
+              <Link
+                href="/admin/moderation"
+                className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+              >
+                <span>Profile Moderation Queue</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
             <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
               Admin Governance & Scam Moderation Dashboard

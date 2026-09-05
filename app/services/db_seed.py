@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models import UserModel, AlumnusModel, CompanyModel, JobPostingModel, MagazineArticleModel
 from app.services.data_loader import load_convocation_list, load_company_details
 from app.services.seed_data import get_job_postings
+from app.services.job_scraper import JobScraperService
 
 logger = logging.getLogger("careersetu.seed")
 
@@ -118,6 +119,22 @@ def seed_database(db: Session) -> None:
                 department="Computer Science & Engineering",
             ),
             UserModel(
+                email="admin@test.com",
+                password_hash=hash_password("password123"),
+                full_name="Test Admin User",
+                role="admin",
+                nsu_id="ADMIN002",
+                department="Computer Science & Engineering",
+            ),
+            UserModel(
+                email="employer@test.com",
+                password_hash=hash_password("password123"),
+                full_name="Test Employer User",
+                role="employer",
+                nsu_id="EMP002",
+                department="Human Resources",
+            ),
+            UserModel(
                 email="alumni@northsouth.edu",
                 password_hash=hash_password("alumni123"),
                 full_name="Tanvir Ahmed",
@@ -137,3 +154,14 @@ def seed_database(db: Session) -> None:
         db.add_all(users)
         db.commit()
         logger.info("Successfully seeded default system users.")
+
+    # 5. Integrate Job Scraper for live job data (disabled by default to avoid conflicts)
+    # Uncomment the following lines to enable automatic job scraping on startup
+    # if db.query(JobPostingModel).count() == 0:
+    #     logger.info("Integrating job scraper for live job data...")
+    #     try:
+    #         scraper = JobScraperService(db)
+    #         jobs_added = scraper.sync_jobs_to_database(force_refresh=True)
+    #         logger.info(f"Successfully integrated {jobs_added} scraped jobs from company data.")
+    #     except Exception as e:
+    #         logger.error(f"Error during job scraping integration: {e}")

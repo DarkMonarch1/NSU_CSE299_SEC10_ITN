@@ -211,7 +211,7 @@ export default function JobsPage() {
                 </div>
                 <div className="rounded-2xl border border-white/5 bg-white/5 p-3.5">
                   <p className="text-xs text-slate-400">Average Salary Range</p>
-                  <p className="text-xl font-bold text-emerald-400 mt-0.5">BDT 45K - 95K</p>
+                  <p className="text-xl font-bold text-emerald-400 mt-0.5">BDT 35K - 110K</p>
                 </div>
               </div>
             </div>

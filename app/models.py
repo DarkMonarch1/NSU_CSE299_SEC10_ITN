@@ -166,3 +166,31 @@ class MagazineArticleModel(Base):
     views = Column(Integer, default=1200)
     sponsored_by = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=_utc_now)
+
+
+class JobScrapeCacheModel(Base):
+    __tablename__ = "job_scrape_cache"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String(255), nullable=False, index=True)
+    job_data_json = Column(Text, nullable=False)
+    last_scraped_at = Column(DateTime, default=_utc_now)
+    cache_expiry_hours = Column(Integer, default=24)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=_utc_now)
+
+
+class ProfileEditModel(Base):
+    __tablename__ = "profile_edits"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_email = Column(String(255), nullable=False, index=True)
+    edit_type = Column(String(50), nullable=False)  # profile_update, cgpa_change, company_change, etc.
+    field_name = Column(String(100), nullable=False)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=False)
+    reason = Column(Text, nullable=True)
+    status = Column(String(50), default="pending")  # pending, approved, rejected
+    reviewed_by = Column(String(255), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_utc_now)

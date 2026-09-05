@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models import JobPostingModel, JobApplicationModel, UserModel
 from app.schemas import JobCreate, JobResponse, JobApplicationCreate, JobApplicationResponse
 from app.auth_utils import get_current_user, require_role
+from app.services.job_scraper import JobScraperService
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -175,3 +176,19 @@ def apply_to_job(
         status=application.status,
         appliedAt=application.applied_at,
     )
+
+
+@router.post("/scrape/refresh", status_code=status.HTTP_200_OK)
+def refresh_job_scrapings(
+    force_refresh: bool = Query(False, description="Force refresh all cached data"),
+    _current_user: UserModel = Depends(require_role("admin")),
+    db: Session = Depends(get_db),
+):
+    """Admin endpoint to trigger job scraping from company data."""
+    scraper = JobScraperService(db)
+    jobs_added = scraper.sync_jobs_to_database(force_refresh)
+    return {
+        "message": f"Job scraping completed successfully",
+        "jobs_added": jobs_added,
+        "force_refresh": force_refresh
+    }

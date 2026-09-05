@@ -17,12 +17,12 @@ export default function InsightsPage() {
   const [selectedDept, setSelectedDept] = useState("CSE");
 
   const salaryData = [
-    { role: "Senior Backend Architect (FastAPI / Node)", minSalary: 180, maxSalary: 240, avgSalary: 210, demand: "Very High" },
-    { role: "AI / ML Research Engineer", minSalary: 160, maxSalary: 220, avgSalary: 190, demand: "High" },
-    { role: "Full Stack Developer (Next.js / React)", minSalary: 140, maxSalary: 190, avgSalary: 165, demand: "Very High" },
-    { role: "AI Product Manager", minSalary: 150, maxSalary: 200, avgSalary: 175, demand: "Moderate" },
-    { role: "DevOps & Cloud Security Engineer", minSalary: 130, maxSalary: 180, avgSalary: 155, demand: "High" },
-    { role: "Data Analyst & Risk Engine", minSalary: 110, maxSalary: 150, avgSalary: 130, demand: "High" },
+    { role: "Senior Software Engineer (5+ years)", minSalary: 90, maxSalary: 300, avgSalary: 150, demand: "Very High" },
+    { role: "AI / ML Engineer", minSalary: 45, maxSalary: 150, avgSalary: 85, demand: "High" },
+    { role: "Full Stack Developer (Next.js / React)", minSalary: 35, maxSalary: 110, avgSalary: 60, demand: "Very High" },
+    { role: "Backend Developer (Python / Node.js)", minSalary: 35, maxSalary: 120, avgSalary: 65, demand: "Very High" },
+    { role: "DevOps & Cloud Engineer", minSalary: 50, maxSalary: 150, avgSalary: 80, demand: "High" },
+    { role: "Junior Software Engineer (0-2 years)", minSalary: 20, maxSalary: 60, avgSalary: 35, demand: "High" },
   ];
 
   return (
@@ -45,27 +45,27 @@ export default function InsightsPage() {
         {/* METRICS ROW */}
         <div className="grid gap-4 sm:grid-cols-4 mb-8">
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Avg Graduate Entry Salary</p>
-            <p className="mt-2 text-3xl font-extrabold text-emerald-400">BDT 145k</p>
-            <span className="text-[10px] text-emerald-400 font-semibold mt-1 inline-block">Monthly Compensation</span>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">NSU CSE Entry Salary</p>
+            <p className="mt-2 text-3xl font-extrabold text-emerald-400">BDT 50-80K</p>
+            <span className="text-[10px] text-emerald-400 font-semibold mt-1 inline-block">Monthly for Fresh Graduates</span>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Top Recruiter Department</p>
-            <p className="mt-2 text-3xl font-extrabold text-cyan-400">CSE (68%)</p>
-            <span className="text-[10px] text-cyan-300 font-semibold mt-1 inline-block">Computer Science & Eng</span>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">NSU Employment Rate</p>
+            <p className="mt-2 text-3xl font-extrabold text-cyan-400">84.1%</p>
+            <span className="text-[10px] text-cyan-300 font-semibold mt-1 inline-block">Graduates Employed</span>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Most Demanded Skill</p>
-            <p className="mt-2 text-3xl font-extrabold text-indigo-300">Next.js & AI</p>
-            <span className="text-[10px] text-indigo-300 font-semibold mt-1 inline-block">FastAPI / Python</span>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Most Demanded Skills</p>
+            <p className="mt-2 text-3xl font-extrabold text-indigo-300">JavaScript</p>
+            <span className="text-[10px] text-indigo-300 font-semibold mt-1 inline-block">Python, React, Next.js</span>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Placement Speed</p>
-            <p className="mt-2 text-3xl font-extrabold text-pink-400">&lt; 45 Days</p>
-            <span className="text-[10px] text-pink-300 font-semibold mt-1 inline-block">From Convocation</span>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">ICT Sector Growth</p>
+            <p className="mt-2 text-3xl font-extrabold text-pink-400">40%</p>
+            <span className="text-[10px] text-pink-300 font-semibold mt-1 inline-block">Annual Growth Rate</span>
           </div>
         </div>
 
@@ -78,7 +78,7 @@ export default function InsightsPage() {
                 Role Salary Benchmarks in Bangladesh Tech Sector (2026)
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Compensation stats gathered from partner employers (Pathao, bKash, Brain Station 23, Optimizely)
+                Compensation stats based on 2026 Bangladesh tech industry research (PayScale, Levels.fyi, BdTechJobs)
               </p>
             </div>
             <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-300">
@@ -122,9 +122,9 @@ export default function InsightsPage() {
               Top Web & Frontend Stack
             </h3>
             <div className="space-y-2 text-xs text-slate-300">
-              <div className="flex justify-between"><span>Next.js App Router</span><span className="text-cyan-400 font-bold">94%</span></div>
-              <div className="flex justify-between"><span>TypeScript</span><span className="text-cyan-400 font-bold">89%</span></div>
-              <div className="flex justify-between"><span>Tailwind CSS</span><span className="text-cyan-400 font-bold">85%</span></div>
+              <div className="flex justify-between"><span>JavaScript / TypeScript</span><span className="text-cyan-400 font-bold">92%</span></div>
+              <div className="flex justify-between"><span>React / Next.js</span><span className="text-cyan-400 font-bold">88%</span></div>
+              <div className="flex justify-between"><span>Vue.js / Angular</span><span className="text-cyan-400 font-bold">65%</span></div>
             </div>
           </div>
 
@@ -134,9 +134,9 @@ export default function InsightsPage() {
               Top Backend & AI Stack
             </h3>
             <div className="space-y-2 text-xs text-slate-300">
-              <div className="flex justify-between"><span>FastAPI & Python</span><span className="text-emerald-400 font-bold">92%</span></div>
-              <div className="flex justify-between"><span>Node.js / NestJS</span><span className="text-emerald-400 font-bold">88%</span></div>
-              <div className="flex justify-between"><span>PostgreSQL & Redis</span><span className="text-emerald-400 font-bold">91%</span></div>
+              <div className="flex justify-between"><span>Python / Django / FastAPI</span><span className="text-emerald-400 font-bold">85%</span></div>
+              <div className="flex justify-between"><span>Node.js / Express</span><span className="text-emerald-400 font-bold">82%</span></div>
+              <div className="flex justify-between"><span>Java / ASP.NET</span><span className="text-emerald-400 font-bold">78%</span></div>
             </div>
           </div>
 
@@ -146,9 +146,9 @@ export default function InsightsPage() {
               DevOps & Cloud Stack
             </h3>
             <div className="space-y-2 text-xs text-slate-300">
-              <div className="flex justify-between"><span>Docker Containerization</span><span className="text-indigo-300 font-bold">90%</span></div>
-              <div className="flex justify-between"><span>GitHub Actions CI/CD</span><span className="text-indigo-300 font-bold">86%</span></div>
-              <div className="flex justify-between"><span>AWS Cloud Services</span><span className="text-indigo-300 font-bold">82%</span></div>
+              <div className="flex justify-between"><span>AWS / Azure / GCP</span><span className="text-indigo-300 font-bold">75%</span></div>
+              <div className="flex justify-between"><span>Docker / Kubernetes</span><span className="text-indigo-300 font-bold">70%</span></div>
+              <div className="flex justify-between"><span>CI/CD (GitHub Actions)</span><span className="text-indigo-300 font-bold">68%</span></div>
             </div>
           </div>
         </div>
