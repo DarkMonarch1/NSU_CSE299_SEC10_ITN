@@ -43,7 +43,7 @@ app = FastAPI(
 # CORS — restrict to frontend origin (AUD-10)
 _raw_origins = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000",
+    "http://localhost:3000,http://127.0.0.1:3000,https://careersetu-frontend.up.railway.app",
 ).split(",")
 ALLOWED_ORIGINS = [o.strip() for o in _raw_origins if o.strip()]
 

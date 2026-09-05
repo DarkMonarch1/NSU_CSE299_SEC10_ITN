@@ -41,9 +41,11 @@ export default function AdminModerationPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/moderation/pending-edits`, {
+        const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+        const token = localStorage.getItem("careerSetuToken") || localStorage.getItem("token") || "";
+        const response = await fetch(`${apiBase}/admin/moderation/pending-edits`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         
@@ -69,11 +71,13 @@ export default function AdminModerationPage() {
   const processEdit = async (editId: number, action: "approve" | "reject") => {
     setProcessing(editId);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/moderation/process-edit`, {
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+      const token = localStorage.getItem("careerSetuToken") || localStorage.getItem("token") || "";
+      const response = await fetch(`${apiBase}/admin/moderation/process-edit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           editId: editId,
