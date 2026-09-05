@@ -6,19 +6,24 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./careersetu.db")
 
 # Configure engine based on database type
-if "sqlite" in DATABASE_URL:
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-elif "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,  # Verify connections before using
-        pool_recycle=300,    # Recycle connections after 5 minutes
-    )
-else:
-    engine = create_engine(DATABASE_URL)
+def create_engine_for_url(database_url: str):
+    """Create an engine for a specific database URL"""
+    if "sqlite" in database_url:
+        return create_engine(
+            database_url,
+            connect_args={"check_same_thread": False}
+        )
+    elif "postgresql" in database_url or "postgres" in database_url:
+        return create_engine(
+            database_url,
+            pool_pre_ping=True,  # Verify connections before using
+            pool_recycle=300,    # Recycle connections after 5 minutes
+        )
+    else:
+        return create_engine(database_url)
+
+# Create default engine (for normal app usage)
+engine = create_engine_for_url(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
